@@ -1,5 +1,6 @@
 using Serilog;
 using VideoService.Api.Repositories;
+using VideoService.Api.Services;
 using Shared.Infrastructure.Authentication;
 using Shared.Infrastructure.MongoDB;
 using Shared.Infrastructure.Redis;
@@ -70,6 +71,9 @@ builder.Services.AddRedis(builder.Configuration);
 
 // Add repositories
 builder.Services.AddScoped<IVideoRepository, VideoRepository>();
+
+// Add services
+builder.Services.AddSingleton<IVideoProcessingQueueService, VideoProcessingQueueService>();
 
 // Add health checks
 builder.Services.AddHealthChecks()
