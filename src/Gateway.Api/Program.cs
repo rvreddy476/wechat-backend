@@ -144,7 +144,8 @@ app.MapGet("/", () => new
         new { path = "/api/reactions/**", service = "PostFeedService", port = 5003 },
         new { path = "/api/chats/**", service = "ChatService", port = 5004 },
         new { path = "/api/messages/**", service = "ChatService", port = 5004 },
-        new { path = "/hubs/chat", service = "ChatService (SignalR)", port = 5004 }
+        new { path = "/hubs/chat", service = "ChatService (SignalR)", port = 5004 },
+        new { path = "/api/videos/**", service = "VideoService", port = 5005 }
     }
 });
 
@@ -155,8 +156,9 @@ app.MapGet("/health/services", async (IHttpClientFactory httpClientFactory) =>
     var userProfileHealth = await CheckServiceHealth("http://localhost:5002/health");
     var postFeedHealth = await CheckServiceHealth("http://localhost:5003/health");
     var chatHealth = await CheckServiceHealth("http://localhost:5004/health");
+    var videoHealth = await CheckServiceHealth("http://localhost:5005/health");
 
-    var overallStatus = authHealth && userProfileHealth && postFeedHealth && chatHealth ? "healthy" : "unhealthy";
+    var overallStatus = authHealth && userProfileHealth && postFeedHealth && chatHealth && videoHealth ? "healthy" : "unhealthy";
 
     return Results.Ok(new
     {
@@ -166,7 +168,8 @@ app.MapGet("/health/services", async (IHttpClientFactory httpClientFactory) =>
             authService = new { status = authHealth ? "healthy" : "unhealthy", url = "http://localhost:5001" },
             userProfileService = new { status = userProfileHealth ? "healthy" : "unhealthy", url = "http://localhost:5002" },
             postFeedService = new { status = postFeedHealth ? "healthy" : "unhealthy", url = "http://localhost:5003" },
-            chatService = new { status = chatHealth ? "healthy" : "unhealthy", url = "http://localhost:5004" }
+            chatService = new { status = chatHealth ? "healthy" : "unhealthy", url = "http://localhost:5004" },
+            videoService = new { status = videoHealth ? "healthy" : "unhealthy", url = "http://localhost:5005" }
         },
         timestamp = DateTime.UtcNow
     });
