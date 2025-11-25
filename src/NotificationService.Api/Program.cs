@@ -79,6 +79,7 @@ builder.Services.AddSignalR()
 
 // Application Services
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddSingleton<IPushService, FcmPushService>();
 builder.Services.AddScoped<INotificationService, Services.NotificationService>();
 
 // Health Checks
