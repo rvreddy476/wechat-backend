@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 234 229 222; /* #EAE5DE - Light mode background */
+    --foreground: 20 14 8;
+
+    --card: 255 255 255;
+    --card-foreground: 20 14 8;
+
+    --popover: 255 255 255;
+    --popover-foreground: 20 14 8;
+
+    --primary: 227 12 77; /* #E30C4D - Brand color */
+    --primary-foreground: 255 255 255;
+
+    --secondary: 234 229 222;
+    --secondary-foreground: 20 14 8;
+
+    --muted: 220 215 208;
+    --muted-foreground: 115 115 115;
+
+    --accent: 220 215 208;
+    --accent-foreground: 20 14 8;
+
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+
+    --border: 210 205 198;
+    --input: 210 205 198;
+    --ring: 227 12 77; /* Primary color for focus ring */
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 15 23 42; /* #0F172A - Dark mode background */
+    --foreground: 241 245 249;
+
+    --card: 30 41 59;
+    --card-foreground: 241 245 249;
+
+    --popover: 30 41 59;
+    --popover-foreground: 241 245 249;
+
+    --primary: 227 12 77; /* Same primary color */
+    --primary-foreground: 255 255 255;
+
+    --secondary: 51 65 85;
+    --secondary-foreground: 241 245 249;
+
+    --muted: 51 65 85;
+    --muted-foreground: 148 163 184;
+
+    --accent: 51 65 85;
+    --accent-foreground: 241 245 249;
+
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+
+    --border: 51 65 85;
+    --input: 51 65 85;
+    --ring: 227 12 77;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

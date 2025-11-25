@@ -10,15 +10,18 @@ public class NotificationService : INotificationService
 {
     private readonly INotificationRepository _repository;
     private readonly IHubContext<NotificationHub> _hubContext;
+    private readonly IPushService _pushService;
     private readonly ILogger<NotificationService> _logger;
 
     public NotificationService(
         INotificationRepository repository,
         IHubContext<NotificationHub> hubContext,
+        IPushService pushService,
         ILogger<NotificationService> logger)
     {
         _repository = repository;
         _hubContext = hubContext;
+        _pushService = pushService;
         _logger = logger;
     }
 
@@ -211,26 +214,21 @@ public class NotificationService : INotificationService
     {
         try
         {
-            // Get user's device tokens
-            var tokensResult = await _repository.GetUserDeviceTokensAsync(notification.RecipientId, activeOnly: true);
-            if (!tokensResult.IsSuccess || !tokensResult.Value.Any())
+            // Use FCM push service to send push notifications
+            var result = await _pushService.SendPushNotificationAsync(notification);
+
+            if (result.IsSuccess && result.Value)
             {
-                _logger.LogWarning("No active device tokens found for user {UserId}", notification.RecipientId);
-                return Result<bool>.Success(false);
+                _logger.LogInformation("Successfully sent push notification {NotificationId} to user {UserId}",
+                    notification.Id, notification.RecipientId);
+            }
+            else
+            {
+                _logger.LogWarning("Push notification {NotificationId} not sent to user {UserId}: {Reason}",
+                    notification.Id, notification.RecipientId, result.Error ?? "No devices or disabled");
             }
 
-            // TODO: Implement Firebase Cloud Messaging (FCM) or Apple Push Notification Service (APNs)
-            // For now, just log that we would send a push notification
-            _logger.LogInformation("Would send push notification {NotificationId} to {Count} devices for user {UserId}",
-                notification.Id, tokensResult.Value.Count, notification.RecipientId);
-
-            // In a real implementation, you would:
-            // 1. Group tokens by platform (iOS, Android, Web)
-            // 2. Send to FCM for Android and Web
-            // 3. Send to APNs for iOS
-            // 4. Handle failures and update token status
-
-            return Result<bool>.Success(true);
+            return result;
         }
         catch (Exception ex)
         {
