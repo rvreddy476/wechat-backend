@@ -1,0 +1,336 @@
+version: '3.8'
+
+services:
+  # Infrastructure Services
+  postgres:
+    image: postgres:16-alpine
+    container_name: wechat-postgres
+    environment:
+      POSTGRES_USER: wechat_admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-wechat_secure_password_123}
+      POSTGRES_DB: wechat_auth
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - wechat-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wechat_admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:7
+    container_name: wechat-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: wechat_admin
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-wechat_secure_password_123}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - wechat-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: wechat-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-wechat_redis_password}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - wechat-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Application Services
+  auth-service:
+    build:
+      context: .
+      dockerfile: src/AuthService.Api/Dockerfile
+    container_name: wechat-auth-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__PostgreSQL=Host=postgres;Port=5432;Database=wechat_auth;Username=wechat_admin;Password=${POSTGRES_PASSWORD:-wechat_secure_password_123}
+      - JWT__Secret=${JWT_SECRET:-your-super-secret-jwt-key-min-32-characters-long-for-security}
+      - JWT__Issuer=WeChat.AuthService
+      - JWT__Audience=WeChat.Client
+      - JWT__ExpirationMinutes=15
+      - JWT__RefreshTokenExpirationDays=7
+    ports:
+      - "5001:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - wechat-network
+    restart: unless-stopped
+
+  userprofile-service:
+    build:
+      context: .
+      dockerfile: src/UserProfileService.Api/Dockerfile
+    container_name: wechat-userprofile-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - MongoDbSettings__ConnectionString=mongodb://wechat_admin:${MONGO_PASSWORD:-wechat_secure_password_123}@mongodb:27017
+      - MongoDbSettings__DatabaseName=wechat_userprofiles
+      - Redis__ConnectionString=redis:6379,password=${REDIS_PASSWORD:-wechat_redis_password}
+      - JWT__Secret=${JWT_SECRET:-your-super-secret-jwt-key-min-32-characters-long-for-security}
+      - JWT__Issuer=WeChat.AuthService
+      - JWT__Audience=WeChat.Client
+    ports:
+      - "5002:8080"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - wechat-network
+    restart: unless-stopped
+
+  postfeed-service:
+    build:
+      context: .
+      dockerfile: src/PostFeedService.Api/Dockerfile
+    container_name: wechat-postfeed-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - MongoDbSettings__ConnectionString=mongodb://wechat_admin:${MONGO_PASSWORD:-wechat_secure_password_123}@mongodb:27017
+      - MongoDbSettings__DatabaseName=wechat_posts
+      - Redis__ConnectionString=redis:6379,password=${REDIS_PASSWORD:-wechat_redis_password}
+      - JWT__Secret=${JWT_SECRET:-your-super-secret-jwt-key-min-32-characters-long-for-security}
+      - JWT__Issuer=WeChat.AuthService
+      - JWT__Audience=WeChat.Client
+    ports:
+      - "5003:8080"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - wechat-network
+    restart: unless-stopped
+
+  chat-service:
+    build:
+      context: .
+      dockerfile: src/ChatService.Api/Dockerfile
+    container_name: wechat-chat-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - MongoDbSettings__ConnectionString=mongodb://wechat_admin:${MONGO_PASSWORD:-wechat_secure_password_123}@mongodb:27017
+      - MongoDbSettings__DatabaseName=wechat_chat
+      - Redis__ConnectionString=redis:6379,password=${REDIS_PASSWORD:-wechat_redis_password}
+      - JWT__Secret=${JWT_SECRET:-your-super-secret-jwt-key-min-32-characters-long-for-security}
+      - JWT__Issuer=WeChat.AuthService
+      - JWT__Audience=WeChat.Client
+    ports:
+      - "5004:8080"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - wechat-network
+    restart: unless-stopped
+
+  video-service:
+    build:
+      context: .
+      dockerfile: src/VideoService.Api/Dockerfile
+    container_name: wechat-video-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - MongoDbSettings__ConnectionString=mongodb://wechat_admin:${MONGO_PASSWORD:-wechat_secure_password_123}@mongodb:27017
+      - MongoDbSettings__DatabaseName=wechat_videos
+      - Redis__ConnectionString=redis:6379,password=${REDIS_PASSWORD:-wechat_redis_password}
+      - JWT__Secret=${JWT_SECRET:-your-super-secret-jwt-key-min-32-characters-long-for-security}
+      - JWT__Issuer=WeChat.AuthService
+      - JWT__Audience=WeChat.Client
+      - GCP__Storage__BucketName=${GCP_BUCKET_NAME:-wechat-videos}
+      - GCP__CredentialsPath=/app/config/gcp-credentials.json
+    ports:
+      - "5005:8080"
+    volumes:
+      - ./config:/app/config:ro
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - wechat-network
+    restart: unless-stopped
+
+  media-service:
+    build:
+      context: .
+      dockerfile: src/MediaService.Api/Dockerfile
+    container_name: wechat-media-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - MongoDbSettings__ConnectionString=mongodb://wechat_admin:${MONGO_PASSWORD:-wechat_secure_password_123}@mongodb:27017
+      - MongoDbSettings__DatabaseName=wechat_media
+      - Redis__ConnectionString=redis:6379,password=${REDIS_PASSWORD:-wechat_redis_password}
+      - JWT__Secret=${JWT_SECRET:-your-super-secret-jwt-key-min-32-characters-long-for-security}
+      - JWT__Issuer=WeChat.AuthService
+      - JWT__Audience=WeChat.Client
+      - GCP__Storage__BucketName=${GCP_BUCKET_NAME:-wechat-media}
+      - GCP__CredentialsPath=/app/config/gcp-credentials.json
+    ports:
+      - "5006:8080"
+    volumes:
+      - ./config:/app/config:ro
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - wechat-network
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: src/NotificationService.Api/Dockerfile
+    container_name: wechat-notification-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - MongoDbSettings__ConnectionString=mongodb://wechat_admin:${MONGO_PASSWORD:-wechat_secure_password_123}@mongodb:27017
+      - MongoDbSettings__DatabaseName=wechat_notifications
+      - Redis__ConnectionString=redis:6379,password=${REDIS_PASSWORD:-wechat_redis_password}
+      - JWT__Secret=${JWT_SECRET:-your-super-secret-jwt-key-min-32-characters-long-for-security}
+      - JWT__Issuer=WeChat.AuthService
+      - JWT__Audience=WeChat.Client
+      - NotificationSettings__EnablePushNotifications=true
+      - NotificationSettings__FirebaseCredentialsPath=/app/config/firebase-credentials.json
+    ports:
+      - "5007:8080"
+    volumes:
+      - ./config:/app/config:ro
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - wechat-network
+    restart: unless-stopped
+
+  realtime-service:
+    build:
+      context: .
+      dockerfile: src/Realtime.Api/Dockerfile
+    container_name: wechat-realtime-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - Redis__ConnectionString=redis:6379,password=${REDIS_PASSWORD:-wechat_redis_password}
+      - JWT__Secret=${JWT_SECRET:-your-super-secret-jwt-key-min-32-characters-long-for-security}
+      - JWT__Issuer=WeChat.AuthService
+      - JWT__Audience=WeChat.Client
+    ports:
+      - "5008:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - wechat-network
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: .
+      dockerfile: src/Gateway.Api/Dockerfile
+    container_name: wechat-gateway
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - Services__AuthService=http://auth-service:8080
+      - Services__UserProfileService=http://userprofile-service:8080
+      - Services__PostFeedService=http://postfeed-service:8080
+      - Services__ChatService=http://chat-service:8080
+      - Services__VideoService=http://video-service:8080
+      - Services__MediaService=http://media-service:8080
+      - Services__NotificationService=http://notification-service:8080
+      - Services__RealtimeService=http://realtime-service:8080
+      - JWT__Secret=${JWT_SECRET:-your-super-secret-jwt-key-min-32-characters-long-for-security}
+      - JWT__Issuer=WeChat.AuthService
+      - JWT__Audience=WeChat.Client
+    ports:
+      - "5000:8080"
+    depends_on:
+      - auth-service
+      - userprofile-service
+      - postfeed-service
+      - chat-service
+      - video-service
+      - media-service
+      - notification-service
+      - realtime-service
+    networks:
+      - wechat-network
+    restart: unless-stopped
+
+  video-processing-worker:
+    build:
+      context: .
+      dockerfile: src/VideoProcessing.Worker/Dockerfile
+    container_name: wechat-video-worker
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+      - MongoDB__ConnectionString=mongodb://wechat_admin:${MONGO_PASSWORD:-wechat_secure_password_123}@mongodb:27017
+      - MongoDB__DatabaseName=wechat_videos
+      - Redis__ConnectionString=redis:6379,password=${REDIS_PASSWORD:-wechat_redis_password}
+      - GCP__Storage__BucketName=${GCP_BUCKET_NAME:-wechat-videos}
+      - GCP__CredentialsPath=/app/config/gcp-credentials.json
+      - Processing__MaxConcurrentJobs=2
+      - Processing__TempDirectory=/tmp/video-processing
+    volumes:
+      - ./config:/app/config:ro
+      - video_temp:/tmp/video-processing
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - wechat-network
+    restart: unless-stopped
+
+networks:
+  wechat-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  mongodb_config:
+  redis_data:
+  video_temp:
