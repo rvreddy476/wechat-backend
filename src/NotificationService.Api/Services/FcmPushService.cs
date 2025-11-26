@@ -4,6 +4,8 @@ using Google.Apis.Auth.OAuth2;
 using NotificationService.Api.Models;
 using NotificationService.Api.Repositories;
 using Shared.Domain.Common;
+using FcmNotification = FirebaseAdmin.Messaging.Notification;
+using AppNotification = NotificationService.Api.Models.Notification;
 
 namespace NotificationService.Api.Services;
 
@@ -53,7 +55,7 @@ public class FcmPushService : IPushService
         }
     }
 
-    public async Task<Result<bool>> SendPushNotificationAsync(Notification notification)
+    public async Task<Result<bool>> SendPushNotificationAsync(AppNotification notification)
     {
         if (!_isEnabled)
         {
@@ -144,7 +146,7 @@ public class FcmPushService : IPushService
             var message = new Message
             {
                 Topic = topic,
-                Notification = new FirebaseAdmin.Messaging.Notification
+                Notification = new FcmNotification
                 {
                     Title = title,
                     Body = body
@@ -235,12 +237,12 @@ public class FcmPushService : IPushService
         }
     }
 
-    private async Task<Message> BuildFcmMessageAsync(Notification notification, DeviceToken deviceToken)
+    private async Task<Message> BuildFcmMessageAsync(AppNotification notification, DeviceToken deviceToken)
     {
         var message = new Message
         {
             Token = deviceToken.Token,
-            Notification = new FirebaseAdmin.Messaging.Notification
+            Notification = new FcmNotification
             {
                 Title = notification.Title,
                 Body = notification.Message,
@@ -392,7 +394,7 @@ public class FcmPushService : IPushService
 
 public interface IPushService
 {
-    Task<Result<bool>> SendPushNotificationAsync(Notification notification);
+    Task<Result<bool>> SendPushNotificationAsync(AppNotification notification);
     Task<Result<string>> SendToTopicAsync(string topic, string title, string body, NotificationType type, Dictionary<string, string>? data = null);
     Task<Result<bool>> SubscribeToTopicAsync(List<string> deviceTokens, string topic);
     Task<Result<bool>> UnsubscribeFromTopicAsync(List<string> deviceTokens, string topic);
