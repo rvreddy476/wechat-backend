@@ -674,6 +674,399 @@ file: <image file> (max 5MB, jpg/png/gif)
 
 ---
 
+#### 2.8 Friend Request Management
+
+##### 2.8.1 Send Friend Request
+
+**POST** `/api/friendrequest/send/{userId}`
+**Auth**: Required
+
+**Description**: Send a friend request to another user
+
+**Request Body** (optional):
+```json
+{
+  "message": "Hi! I'd like to connect with you."
+}
+```
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": {
+    "id": "507f1f77bcf86cd799439011",
+    "senderId": "550e8400-e29b-41d4-a716-446655440000",
+    "senderUsername": "johndoe",
+    "senderDisplayName": "John Doe",
+    "senderAvatarUrl": "https://...",
+    "senderIsVerified": false,
+    "receiverId": "550e8400-e29b-41d4-a716-446655440001",
+    "receiverUsername": "janedoe",
+    "receiverDisplayName": "Jane Doe",
+    "receiverAvatarUrl": "https://...",
+    "receiverIsVerified": true,
+    "status": "Pending",
+    "message": "Hi! I'd like to connect with you.",
+    "createdAt": "2025-01-26T10:30:00Z",
+    "respondedAt": null
+  }
+}
+```
+
+**Errors**:
+- `400`: Cannot send request to yourself
+- `400`: User is blocked
+- `400`: Already friends
+- `400`: Friend request already exists
+- `404`: User not found
+
+---
+
+##### 2.8.2 Accept Friend Request
+
+**POST** `/api/friendrequest/{requestId}/accept`
+**Auth**: Required
+
+**Description**: Accept a pending friend request
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": true,
+  "message": "Friend request accepted"
+}
+```
+
+**Errors**:
+- `400`: Friend request not found
+- `403`: Not authorized to accept this request
+
+---
+
+##### 2.8.3 Reject Friend Request
+
+**POST** `/api/friendrequest/{requestId}/reject`
+**Auth**: Required
+
+**Description**: Reject a pending friend request
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": true,
+  "message": "Friend request rejected"
+}
+```
+
+**Errors**:
+- `400`: Friend request not found
+- `403`: Not authorized to reject this request
+
+---
+
+##### 2.8.4 Cancel Friend Request
+
+**DELETE** `/api/friendrequest/{requestId}/cancel`
+**Auth**: Required
+
+**Description**: Cancel a friend request you sent
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": true,
+  "message": "Friend request cancelled"
+}
+```
+
+**Errors**:
+- `400`: Friend request not found
+- `403`: Not authorized to cancel this request
+
+---
+
+##### 2.8.5 Get Received Friend Requests
+
+**GET** `/api/friendrequest/received?page=1&pageSize=20`
+**Auth**: Required
+
+**Description**: Get all pending friend requests received (incoming)
+
+**Query Parameters**:
+- `page` (optional, default: 1): Page number
+- `pageSize` (optional, default: 20): Items per page
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "507f1f77bcf86cd799439011",
+      "senderId": "550e8400-e29b-41d4-a716-446655440000",
+      "senderUsername": "johndoe",
+      "senderDisplayName": "John Doe",
+      "senderAvatarUrl": "https://...",
+      "senderIsVerified": false,
+      "receiverId": "550e8400-e29b-41d4-a716-446655440001",
+      "receiverUsername": "janedoe",
+      "receiverDisplayName": "Jane Doe",
+      "receiverAvatarUrl": "https://...",
+      "receiverIsVerified": true,
+      "status": "Pending",
+      "message": "Hi! I'd like to connect.",
+      "createdAt": "2025-01-26T10:30:00Z",
+      "respondedAt": null
+    }
+  ]
+}
+```
+
+---
+
+##### 2.8.6 Get Sent Friend Requests
+
+**GET** `/api/friendrequest/sent?page=1&pageSize=20`
+**Auth**: Required
+
+**Description**: Get all pending friend requests sent (outgoing)
+
+**Query Parameters**:
+- `page` (optional, default: 1): Page number
+- `pageSize` (optional, default: 20): Items per page
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "507f1f77bcf86cd799439011",
+      "senderId": "550e8400-e29b-41d4-a716-446655440001",
+      "senderUsername": "janedoe",
+      "senderDisplayName": "Jane Doe",
+      "senderAvatarUrl": "https://...",
+      "senderIsVerified": true,
+      "receiverId": "550e8400-e29b-41d4-a716-446655440000",
+      "receiverUsername": "johndoe",
+      "receiverDisplayName": "John Doe",
+      "receiverAvatarUrl": "https://...",
+      "receiverIsVerified": false,
+      "status": "Pending",
+      "message": null,
+      "createdAt": "2025-01-26T09:00:00Z",
+      "respondedAt": null
+    }
+  ]
+}
+```
+
+---
+
+##### 2.8.7 Get Friend Request by ID
+
+**GET** `/api/friendrequest/{requestId}`
+**Auth**: Required
+
+**Description**: Get details of a specific friend request
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": {
+    "id": "507f1f77bcf86cd799439011",
+    "senderId": "550e8400-e29b-41d4-a716-446655440000",
+    "senderUsername": "johndoe",
+    "senderDisplayName": "John Doe",
+    "senderAvatarUrl": "https://...",
+    "senderIsVerified": false,
+    "receiverId": "550e8400-e29b-41d4-a716-446655440001",
+    "receiverUsername": "janedoe",
+    "receiverDisplayName": "Jane Doe",
+    "receiverAvatarUrl": "https://...",
+    "receiverIsVerified": true,
+    "status": "Pending",
+    "message": "Hi! I'd like to connect.",
+    "createdAt": "2025-01-26T10:30:00Z",
+    "respondedAt": null
+  }
+}
+```
+
+**Errors**:
+- `404`: Friend request not found
+
+---
+
+##### 2.8.8 Check Friendship Status
+
+**GET** `/api/friendrequest/status/{userId}`
+**Auth**: Required
+
+**Description**: Check friendship status with another user
+
+**Response** (200 OK) - When friends:
+```json
+{
+  "success": true,
+  "data": {
+    "status": "friends",
+    "areFriends": true,
+    "hasPendingRequest": false
+  }
+}
+```
+
+**Response** (200 OK) - When request sent:
+```json
+{
+  "success": true,
+  "data": {
+    "status": "request_sent",
+    "areFriends": false,
+    "hasPendingRequest": true,
+    "requestDirection": "outgoing"
+  }
+}
+```
+
+**Response** (200 OK) - When request received:
+```json
+{
+  "success": true,
+  "data": {
+    "status": "request_received",
+    "areFriends": false,
+    "hasPendingRequest": true,
+    "requestDirection": "incoming"
+  }
+}
+```
+
+**Response** (200 OK) - When not friends:
+```json
+{
+  "success": true,
+  "data": {
+    "status": "not_friends",
+    "areFriends": false,
+    "hasPendingRequest": false
+  }
+}
+```
+
+---
+
+##### 2.8.9 Get Friends List
+
+**GET** `/api/friendrequest/friends?page=1&pageSize=20`
+**Auth**: Required
+
+**Description**: Get list of your friends
+
+**Query Parameters**:
+- `page` (optional, default: 1): Page number
+- `pageSize` (optional, default: 20): Items per page
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "userId": "550e8400-e29b-41d4-a716-446655440000",
+      "username": "johndoe",
+      "displayName": "John Doe",
+      "avatarUrl": "https://...",
+      "isVerified": false,
+      "bio": "Software developer",
+      "friendshipDate": "2025-01-20T15:30:00Z"
+    }
+  ]
+}
+```
+
+---
+
+##### 2.8.10 Get User's Friends
+
+**GET** `/api/friendrequest/friends/{userId}?page=1&pageSize=20`
+**Auth**: Optional
+
+**Description**: Get list of another user's friends
+
+**Query Parameters**:
+- `page` (optional, default: 1): Page number
+- `pageSize` (optional, default: 20): Items per page
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "userId": "550e8400-e29b-41d4-a716-446655440002",
+      "username": "bobsmith",
+      "displayName": "Bob Smith",
+      "avatarUrl": "https://...",
+      "isVerified": true,
+      "bio": "Designer and creator",
+      "friendshipDate": "2025-01-15T12:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+##### 2.8.11 Remove Friend (Unfriend)
+
+**DELETE** `/api/friendrequest/friends/{userId}`
+**Auth**: Required
+
+**Description**: Remove a friend from your friends list
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": true,
+  "message": "Friend removed successfully"
+}
+```
+
+**Errors**:
+- `400`: Cannot remove yourself
+- `400`: Not friends with this user
+
+---
+
+##### 2.8.12 Get Friend Request Statistics
+
+**GET** `/api/friendrequest/stats`
+**Auth**: Required
+
+**Description**: Get statistics about friend requests and friendships
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": {
+    "pendingRequestsSent": 3,
+    "pendingRequestsReceived": 5,
+    "totalFriends": 42
+  }
+}
+```
+
+---
+
 ### UserProfile Service Configuration
 
 **appsettings.json**:
