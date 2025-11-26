@@ -38,8 +38,8 @@ public interface ISoftDelete
 /// </summary>
 public abstract class Entity : IEntity
 {
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public virtual DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public virtual DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
 
 /// <summary>
@@ -47,7 +47,7 @@ public abstract class Entity : IEntity
 /// </summary>
 public abstract class Entity<TId> : Entity, IEntity<TId> where TId : notnull
 {
-    public TId Id { get; set; } = default!;
+    public virtual TId Id { get; set; } = default!;
 }
 
 /// <summary>
