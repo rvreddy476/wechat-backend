@@ -14,6 +14,14 @@ public record LoginRequest
     public required string Password { get; init; }
 }
 
+public record RegisterResponse
+{
+    public required string UserId { get; init; }
+    public required string Username { get; init; }
+    public required string Email { get; init; }
+    public string Message { get; init; } = "Registration successful";
+}
+
 public record LoginResponse
 {
     public required string UserId { get; init; }
@@ -29,6 +37,13 @@ public record LoginResponse
 public record RefreshTokenRequest
 {
     public required string RefreshToken { get; init; }
+}
+
+public record RefreshTokenResponse
+{
+    public required string AccessToken { get; init; }
+    public required string RefreshToken { get; init; }
+    public DateTime ExpiresAt { get; init; }
 }
 
 public record ChangePasswordRequest

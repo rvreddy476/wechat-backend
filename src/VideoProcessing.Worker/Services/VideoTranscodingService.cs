@@ -1,4 +1,5 @@
 using FFMpegCore;
+using FFMpegCore.Arguments;
 using FFMpegCore.Enums;
 using FFMpegCore.Pipes;
 using VideoProcessing.Worker.Models;
