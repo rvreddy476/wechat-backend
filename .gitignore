@@ -1,0 +1,21 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/src/Gateway.Api/obj
+/src/MediaService.Api/obj
+/src/NotificationService.Api/obj
+/src/PostFeedService.Api/obj
+/src/Realtime.Api/obj
+/src/Shared/Shared.Contracts/bin/Debug/net8.0
+/src/Shared/Shared.Contracts/obj/Debug/net8.0
+/src/Shared/Shared.Domain/bin/Debug/net8.0
+/src/Shared/Shared.Domain/obj/Debug/net8.0
+/src/Shared/Shared.Infrastructure/bin/Debug/net8.0
+/src/Shared/Shared.Infrastructure/obj/Debug/net8.0
+/src/UserProfileService.Api/obj
+/src/VideoProcessing.Worker/obj/Debug/net8.0
+/src/VideoService.Api/obj
+/src/AuthService.Api/obj
+/src/ChatService.Api/obj
