@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using VideoService.Api.Models;
 using VideoService.Api.Repositories;
+using VideoService.Api.Services;
 using Shared.Contracts.Common;
 
 namespace VideoService.Api.Controllers;
@@ -13,11 +14,16 @@ namespace VideoService.Api.Controllers;
 public class VideosController : ControllerBase
 {
     private readonly IVideoRepository _repository;
+    private readonly IVideoProcessingQueueService _processingQueue;
     private readonly ILogger<VideosController> _logger;
 
-    public VideosController(IVideoRepository repository, ILogger<VideosController> logger)
+    public VideosController(
+        IVideoRepository repository,
+        IVideoProcessingQueueService processingQueue,
+        ILogger<VideosController> logger)
     {
         _repository = repository;
+        _processingQueue = processingQueue;
         _logger = logger;
     }
 
@@ -73,6 +79,18 @@ public class VideosController : ControllerBase
         if (!result.IsSuccess)
         {
             return BadRequest(ApiResponse<Video>.ErrorResponse(result.Error));
+        }
+
+        // Enqueue video for background processing
+        try
+        {
+            await _processingQueue.EnqueueVideoProcessingAsync(result.Value, request.SourceUrl);
+            _logger.LogInformation("Video {VideoId} enqueued for processing", result.Value.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to enqueue video {VideoId} for processing", result.Value.Id);
+            // Don't fail the request if queue is unavailable - video is already created
         }
 
         return Ok(ApiResponse<Video>.SuccessResponse(result.Value));
