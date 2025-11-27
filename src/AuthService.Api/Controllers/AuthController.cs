@@ -10,6 +10,7 @@ using Shared.Contracts.Auth;
 using Shared.Contracts.Common;
 using Shared.Infrastructure.Authentication;
 using Dapper;
+using Shared.Domain.Common;
 
 namespace AuthService.Api.Controllers;
 
@@ -600,7 +601,7 @@ public class AuthController : ControllerBase
         var response = new VerifyCodeResponse
         {
             IsValid = true,
-            Message = result.Message ?? "Verification successful",
+            Message = result.IsSuccess ? "Verification successful": "Verification Fail",
             EmailVerified = user.IsEmailVerified,
             PhoneVerified = user.IsPhoneVerified
         };
