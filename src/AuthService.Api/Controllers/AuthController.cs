@@ -34,6 +34,16 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<ApiResponse<RegisterResponse>>> Register([FromBody] RegisterRequest request)
     {
         // Validate input
+        if (string.IsNullOrWhiteSpace(request.FirstName))
+        {
+            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("First name is required"));
+        }
+
+        if (string.IsNullOrWhiteSpace(request.LastName))
+        {
+            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Last name is required"));
+        }
+
         if (string.IsNullOrWhiteSpace(request.Username) || request.Username.Length < 3)
         {
             return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Username must be at least 3 characters"));
@@ -44,9 +54,36 @@ public class AuthController : ControllerBase
             return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Valid email is required"));
         }
 
+        if (string.IsNullOrWhiteSpace(request.PhoneNumber))
+        {
+            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Phone number is required"));
+        }
+
         if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 8)
         {
             return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Password must be at least 8 characters"));
+        }
+
+        // Validate handler if provided (optional at registration)
+        if (!string.IsNullOrWhiteSpace(request.Handler) && request.Handler.Length < 3)
+        {
+            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Handler must be at least 3 characters"));
+        }
+
+        // Validate gender if provided
+        if (!string.IsNullOrWhiteSpace(request.Gender))
+        {
+            var validGenders = new[] { "Male", "Female", "Other", "PreferNotToSay" };
+            if (!validGenders.Contains(request.Gender))
+            {
+                return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Invalid gender value. Must be: Male, Female, Other, or PreferNotToSay"));
+            }
+        }
+
+        // Validate date of birth if provided
+        if (request.DateOfBirth.HasValue && request.DateOfBirth.Value > DateTime.UtcNow.Date)
+        {
+            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Date of birth cannot be in the future"));
         }
 
         // Check if email or username already exists
@@ -65,10 +102,15 @@ public class AuthController : ControllerBase
 
         // Register user
         var result = await _authRepository.RegisterUserAsync(
+            request.FirstName,
+            request.LastName,
             request.Username,
             request.Email,
+            request.PhoneNumber,
             passwordHash,
-            request.PhoneNumber
+            request.Handler,
+            request.Gender,
+            request.DateOfBirth
         );
 
         if (!result.IsSuccess)
@@ -89,9 +131,13 @@ public class AuthController : ControllerBase
 
         var response = new RegisterResponse
         {
-            UserId = user.UserId,
+            UserId = user.UserId.ToString(),
+            FirstName = user.FirstName,
+            LastName = user.LastName,
             Username = user.Username,
             Email = user.Email,
+            PhoneNumber = user.PhoneNumber!,
+            Handler = user.Handler,
             Message = "Registration successful. Please verify your email."
         };
 

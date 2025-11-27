@@ -2,10 +2,15 @@ namespace Shared.Contracts.Auth;
 
 public record RegisterRequest
 {
+    public required string FirstName { get; init; }
+    public required string LastName { get; init; }
     public required string Username { get; init; }
     public required string Email { get; init; }
+    public required string PhoneNumber { get; init; }
     public required string Password { get; init; }
-    public string? PhoneNumber { get; init; }
+    public string? Handler { get; init; }  // Optional at registration, mandatory for channel creation
+    public string? Gender { get; init; }  // Male, Female, Other, PreferNotToSay
+    public DateTime? DateOfBirth { get; init; }
 }
 
 public record LoginRequest
@@ -17,8 +22,12 @@ public record LoginRequest
 public record RegisterResponse
 {
     public required string UserId { get; init; }
+    public required string FirstName { get; init; }
+    public required string LastName { get; init; }
     public required string Username { get; init; }
     public required string Email { get; init; }
+    public required string PhoneNumber { get; init; }
+    public string? Handler { get; init; }
     public string Message { get; init; } = "Registration successful";
 }
 
