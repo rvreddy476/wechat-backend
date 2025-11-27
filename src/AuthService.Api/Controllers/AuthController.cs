@@ -44,11 +44,6 @@ public class AuthController : ControllerBase
             return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Last name is required"));
         }
 
-        if (string.IsNullOrWhiteSpace(request.Username) || request.Username.Length < 3)
-        {
-            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Username must be at least 3 characters"));
-        }
-
         if (string.IsNullOrWhiteSpace(request.Email) || !request.Email.Contains('@'))
         {
             return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Valid email is required"));
@@ -64,37 +59,46 @@ public class AuthController : ControllerBase
             return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Password must be at least 8 characters"));
         }
 
+        // Validate gender (MANDATORY)
+        if (string.IsNullOrWhiteSpace(request.Gender))
+        {
+            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Gender is required"));
+        }
+
+        var validGenders = new[] { "Male", "Female", "Other", "PreferNotToSay" };
+        if (!validGenders.Contains(request.Gender))
+        {
+            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Invalid gender value. Must be: Male, Female, Other, or PreferNotToSay"));
+        }
+
+        // Validate date of birth (MANDATORY)
+        if (request.DateOfBirth == default || request.DateOfBirth > DateTime.UtcNow.Date)
+        {
+            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Valid date of birth is required and cannot be in the future"));
+        }
+
         // Validate handler if provided (optional at registration)
         if (!string.IsNullOrWhiteSpace(request.Handler) && request.Handler.Length < 3)
         {
             return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Handler must be at least 3 characters"));
         }
 
-        // Validate gender if provided
-        if (!string.IsNullOrWhiteSpace(request.Gender))
+        // Auto-generate username from email (part before @)
+        var username = request.Email.Split('@')[0].ToLower();
+
+        // Ensure username is unique by appending numbers if needed
+        var baseUsername = username;
+        var counter = 1;
+        while (await _authRepository.UsernameExistsAsync(username))
         {
-            var validGenders = new[] { "Male", "Female", "Other", "PreferNotToSay" };
-            if (!validGenders.Contains(request.Gender))
-            {
-                return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Invalid gender value. Must be: Male, Female, Other, or PreferNotToSay"));
-            }
+            username = $"{baseUsername}{counter}";
+            counter++;
         }
 
-        // Validate date of birth if provided
-        if (request.DateOfBirth.HasValue && request.DateOfBirth.Value > DateTime.UtcNow.Date)
-        {
-            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Date of birth cannot be in the future"));
-        }
-
-        // Check if email or username already exists
+        // Check if email already exists
         if (await _authRepository.EmailExistsAsync(request.Email))
         {
             return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Email already registered"));
-        }
-
-        if (await _authRepository.UsernameExistsAsync(request.Username))
-        {
-            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Username already taken"));
         }
 
         // Hash password using BCrypt
@@ -104,7 +108,7 @@ public class AuthController : ControllerBase
         var result = await _authRepository.RegisterUserAsync(
             request.FirstName,
             request.LastName,
-            request.Username,
+            username,  // Auto-generated username
             request.Email,
             request.PhoneNumber,
             passwordHash,

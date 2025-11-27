@@ -12,9 +12,9 @@ public interface IAuthRepository
         string email,
         string phoneNumber,
         string passwordHash,
+        string gender,           // MANDATORY
+        DateTime dateOfBirth,    // MANDATORY
         string? handler = null,
-        string? gender = null,
-        DateTime? dateOfBirth = null,
         string roleName = "User");
     Task<Result<UserAuthDto>> AuthenticateUserAsync(string emailOrUsername, string providedPassword);
     Task<Result<UserDto>> GetUserByIdAsync(Guid userId);

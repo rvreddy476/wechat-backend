@@ -14,10 +14,10 @@ CREATE OR REPLACE FUNCTION auth.sp_RegisterUser(
     p_Username VARCHAR(50),
     p_Email VARCHAR(255),
     p_PasswordHash VARCHAR(255),
-    p_PhoneNumber VARCHAR(20) DEFAULT NULL,
+    p_PhoneNumber VARCHAR(20),
+    p_Gender VARCHAR(20),         -- MANDATORY
+    p_DateOfBirth DATE,           -- MANDATORY
     p_Handler VARCHAR(50) DEFAULT NULL,
-    p_Gender VARCHAR(20) DEFAULT NULL,
-    p_DateOfBirth DATE DEFAULT NULL,
     p_IpAddress VARCHAR(45) DEFAULT NULL,
     p_UserAgent TEXT DEFAULT NULL
 )
@@ -57,6 +57,24 @@ BEGIN
 
     IF p_PhoneNumber IS NULL OR TRIM(p_PhoneNumber) = '' THEN
         RAISE EXCEPTION 'Phone number is required';
+    END IF;
+
+    -- Validate gender (MANDATORY)
+    IF p_Gender IS NULL OR TRIM(p_Gender) = '' THEN
+        RAISE EXCEPTION 'Gender is required';
+    END IF;
+
+    IF p_Gender NOT IN ('Male', 'Female', 'Other', 'PreferNotToSay') THEN
+        RAISE EXCEPTION 'Invalid gender value. Must be: Male, Female, Other, or PreferNotToSay';
+    END IF;
+
+    -- Validate date of birth (MANDATORY)
+    IF p_DateOfBirth IS NULL THEN
+        RAISE EXCEPTION 'Date of birth is required';
+    END IF;
+
+    IF p_DateOfBirth > CURRENT_DATE THEN
+        RAISE EXCEPTION 'Date of birth cannot be in the future';
     END IF;
 
     -- Check if email already exists

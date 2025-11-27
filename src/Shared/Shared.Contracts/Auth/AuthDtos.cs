@@ -4,13 +4,13 @@ public record RegisterRequest
 {
     public required string FirstName { get; init; }
     public required string LastName { get; init; }
-    public required string Username { get; init; }
     public required string Email { get; init; }
     public required string PhoneNumber { get; init; }
     public required string Password { get; init; }
+    public required string Gender { get; init; }  // MANDATORY: Male, Female, Other, PreferNotToSay
+    public required DateTime DateOfBirth { get; init; }  // MANDATORY
     public string? Handler { get; init; }  // Optional at registration, mandatory for channel creation
-    public string? Gender { get; init; }  // Male, Female, Other, PreferNotToSay
-    public DateTime? DateOfBirth { get; init; }
+    // Note: Username is auto-generated from email (part before @)
 }
 
 public record LoginRequest
