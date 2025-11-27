@@ -34,9 +34,14 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<ApiResponse<RegisterResponse>>> Register([FromBody] RegisterRequest request)
     {
         // Validate input
-        if (string.IsNullOrWhiteSpace(request.Username) || request.Username.Length < 3)
+        if (string.IsNullOrWhiteSpace(request.FirstName))
         {
-            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Username must be at least 3 characters"));
+            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("First name is required"));
+        }
+
+        if (string.IsNullOrWhiteSpace(request.LastName))
+        {
+            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Last name is required"));
         }
 
         if (string.IsNullOrWhiteSpace(request.Email) || !request.Email.Contains('@'))
@@ -44,20 +49,56 @@ public class AuthController : ControllerBase
             return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Valid email is required"));
         }
 
+        if (string.IsNullOrWhiteSpace(request.PhoneNumber))
+        {
+            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Phone number is required"));
+        }
+
         if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 8)
         {
             return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Password must be at least 8 characters"));
         }
 
-        // Check if email or username already exists
+        // Validate gender (MANDATORY)
+        if (string.IsNullOrWhiteSpace(request.Gender))
+        {
+            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Gender is required"));
+        }
+
+        var validGenders = new[] { "Male", "Female", "Other", "PreferNotToSay" };
+        if (!validGenders.Contains(request.Gender))
+        {
+            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Invalid gender value. Must be: Male, Female, Other, or PreferNotToSay"));
+        }
+
+        // Validate date of birth (MANDATORY)
+        if (request.DateOfBirth == default || request.DateOfBirth > DateTime.UtcNow.Date)
+        {
+            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Valid date of birth is required and cannot be in the future"));
+        }
+
+        // Validate handler if provided (optional at registration)
+        if (!string.IsNullOrWhiteSpace(request.Handler) && request.Handler.Length < 3)
+        {
+            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Handler must be at least 3 characters"));
+        }
+
+        // Auto-generate username from email (part before @)
+        var username = request.Email.Split('@')[0].ToLower();
+
+        // Ensure username is unique by appending numbers if needed
+        var baseUsername = username;
+        var counter = 1;
+        while (await _authRepository.UsernameExistsAsync(username))
+        {
+            username = $"{baseUsername}{counter}";
+            counter++;
+        }
+
+        // Check if email already exists
         if (await _authRepository.EmailExistsAsync(request.Email))
         {
             return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Email already registered"));
-        }
-
-        if (await _authRepository.UsernameExistsAsync(request.Username))
-        {
-            return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Username already taken"));
         }
 
         // Hash password using BCrypt
@@ -65,10 +106,15 @@ public class AuthController : ControllerBase
 
         // Register user
         var result = await _authRepository.RegisterUserAsync(
-            request.Username,
+            request.FirstName,
+            request.LastName,
+            username,  // Auto-generated username
             request.Email,
+            request.PhoneNumber,
             passwordHash,
-            request.PhoneNumber
+            request.Handler,
+            request.Gender,
+            request.DateOfBirth
         );
 
         if (!result.IsSuccess)
@@ -90,8 +136,12 @@ public class AuthController : ControllerBase
         var response = new RegisterResponse
         {
             UserId = user.UserId.ToString(),
+            FirstName = user.FirstName,
+            LastName = user.LastName,
             Username = user.Username,
             Email = user.Email,
+            PhoneNumber = user.PhoneNumber!,
+            Handler = user.Handler,
             Message = "Registration successful. Please verify your email."
         };
 

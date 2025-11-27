@@ -1,12 +1,12 @@
 -- =============================================
--- WeChat.com - AuthService Stored Procedures
--- Purpose: User Management Operations
+-- Updated User Management Procedures with Profile Fields
+-- Date: 2025-11-27
 -- =============================================
 
 SET search_path TO auth, public;
 
 -- =============================================
--- Procedure: Register New User
+-- Procedure: Register New User (Updated with Profile Fields)
 -- =============================================
 CREATE OR REPLACE FUNCTION auth.sp_RegisterUser(
     p_FirstName VARCHAR(100),
@@ -160,117 +160,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =============================================
--- Procedure: Authenticate User (Login)
--- =============================================
-CREATE OR REPLACE FUNCTION auth.sp_AuthenticateUser(
-    p_EmailOrUsername VARCHAR(255),
-    p_PasswordHash VARCHAR(255),
-    p_IpAddress VARCHAR(45) DEFAULT NULL,
-    p_UserAgent TEXT DEFAULT NULL
-)
-RETURNS TABLE (
-    UserId UUID,
-    Username VARCHAR(50),
-    Email VARCHAR(255),
-    EmailVerified BOOLEAN,
-    SecurityStamp UUID,
-    Roles TEXT,
-    Success BOOLEAN,
-    Message TEXT,
-    IsLockedOut BOOLEAN,
-    LockoutEnd TIMESTAMP WITH TIME ZONE
-) AS $$
-DECLARE
-    v_User RECORD;
-    v_Roles TEXT;
-BEGIN
-    -- Find user by email or username
-    SELECT u.* INTO v_User
-    FROM auth.Users u
-    WHERE (u.Email = p_EmailOrUsername OR u.Username = p_EmailOrUsername)
-      AND u.IsDeleted = FALSE;
-
-    -- Log login attempt
-    INSERT INTO auth.LoginAttempts (UserId, Email, Username, IpAddress, UserAgent, Success, FailureReason)
-    VALUES (
-        v_User.UserId,
-        p_EmailOrUsername,
-        p_EmailOrUsername,
-        p_IpAddress,
-        p_UserAgent,
-        v_User.UserId IS NOT NULL AND v_User.PasswordHash = p_PasswordHash,
-        CASE
-            WHEN v_User.UserId IS NULL THEN 'User not found'
-            WHEN v_User.PasswordHash != p_PasswordHash THEN 'Invalid password'
-            WHEN v_User.IsActive = FALSE THEN 'Account inactive'
-            WHEN v_User.LockoutEnd IS NOT NULL AND v_User.LockoutEnd > NOW() THEN 'Account locked'
-            ELSE NULL
-        END
-    );
-
-    -- User not found
-    IF v_User.UserId IS NULL THEN
-        RETURN QUERY SELECT
-            NULL::UUID, NULL::VARCHAR(50), NULL::VARCHAR(255), NULL::BOOLEAN, NULL::UUID,
-            NULL::TEXT, FALSE, 'Invalid credentials'::TEXT, FALSE, NULL::TIMESTAMP WITH TIME ZONE;
-        RETURN;
-    END IF;
-
-    -- Check if account is locked
-    IF v_User.LockoutEnd IS NOT NULL AND v_User.LockoutEnd > NOW() THEN
-        RETURN QUERY SELECT
-            v_User.UserId, v_User.Username, v_User.Email, v_User.EmailVerified, v_User.SecurityStamp,
-            NULL::TEXT, FALSE, 'Account is locked'::TEXT, TRUE, v_User.LockoutEnd;
-        RETURN;
-    END IF;
-
-    -- Check if account is active
-    IF v_User.IsActive = FALSE THEN
-        RETURN QUERY SELECT
-            v_User.UserId, v_User.Username, v_User.Email, v_User.EmailVerified, v_User.SecurityStamp,
-            NULL::TEXT, FALSE, 'Account is inactive'::TEXT, FALSE, NULL::TIMESTAMP WITH TIME ZONE;
-        RETURN;
-    END IF;
-
-    -- Check password
-    IF v_User.PasswordHash != p_PasswordHash THEN
-        -- Increment failed login count
-        UPDATE auth.Users
-        SET AccessFailedCount = AccessFailedCount + 1
-        WHERE UserId = v_User.UserId;
-
-        RETURN QUERY SELECT
-            v_User.UserId, v_User.Username, v_User.Email, v_User.EmailVerified, v_User.SecurityStamp,
-            NULL::TEXT, FALSE, 'Invalid credentials'::TEXT, FALSE, NULL::TIMESTAMP WITH TIME ZONE;
-        RETURN;
-    END IF;
-
-    -- Get user roles
-    SELECT STRING_AGG(r.RoleName, ',') INTO v_Roles
-    FROM auth.UserRoles ur
-    JOIN auth.Roles r ON ur.RoleId = r.RoleId
-    WHERE ur.UserId = v_User.UserId;
-
-    -- Update last login
-    UPDATE auth.Users
-    SET LastLoginAt = NOW(),
-        AccessFailedCount = 0,
-        LockoutEnd = NULL
-    WHERE UserId = v_User.UserId;
-
-    -- Log successful login
-    INSERT INTO auth.AuditLogs (UserId, Action, EntityType, EntityId, IpAddress, UserAgent, Success)
-    VALUES (v_User.UserId, 'USER_LOGIN', 'USER', v_User.UserId, p_IpAddress, p_UserAgent, TRUE);
-
-    -- Return user data
-    RETURN QUERY SELECT
-        v_User.UserId, v_User.Username, v_User.Email, v_User.EmailVerified, v_User.SecurityStamp,
-        v_Roles, TRUE, 'Login successful'::TEXT, FALSE, NULL::TIMESTAMP WITH TIME ZONE;
-END;
-$$ LANGUAGE plpgsql;
-
--- =============================================
--- Procedure: Get User By Id
+-- Procedure: Get User By Id (Updated)
 -- =============================================
 CREATE OR REPLACE FUNCTION auth.sp_GetUserById(
     p_UserId UUID
@@ -325,7 +215,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =============================================
--- Procedure: Update User Profile
+-- Procedure: Update User Profile (Updated)
 -- =============================================
 CREATE OR REPLACE FUNCTION auth.sp_UpdateUserProfile(
     p_UserId UUID,
@@ -398,108 +288,9 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =============================================
--- Procedure: Change Password
--- =============================================
-CREATE OR REPLACE FUNCTION auth.sp_ChangePassword(
-    p_UserId UUID,
-    p_OldPasswordHash VARCHAR(255),
-    p_NewPasswordHash VARCHAR(255),
-    p_IpAddress VARCHAR(45) DEFAULT NULL
-)
-RETURNS TABLE (
-    Success BOOLEAN,
-    Message TEXT
-) AS $$
-DECLARE
-    v_CurrentPasswordHash VARCHAR(255);
-BEGIN
-    -- Get current password hash
-    SELECT PasswordHash INTO v_CurrentPasswordHash
-    FROM auth.Users
-    WHERE UserId = p_UserId AND IsDeleted = FALSE;
-
-    -- Check if user exists
-    IF v_CurrentPasswordHash IS NULL THEN
-        RETURN QUERY SELECT FALSE, 'User not found'::TEXT;
-        RETURN;
-    END IF;
-
-    -- Verify old password
-    IF v_CurrentPasswordHash != p_OldPasswordHash THEN
-        -- Log failed attempt
-        INSERT INTO auth.AuditLogs (UserId, Action, EntityType, EntityId, IpAddress, Success, FailureReason)
-        VALUES (p_UserId, 'PASSWORD_CHANGE_FAILED', 'USER', p_UserId, p_IpAddress, FALSE, 'Invalid old password');
-
-        RETURN QUERY SELECT FALSE, 'Invalid old password'::TEXT;
-        RETURN;
-    END IF;
-
-    -- Update password
-    UPDATE auth.Users
-    SET PasswordHash = p_NewPasswordHash,
-        UpdatedAt = NOW()
-    WHERE UserId = p_UserId;
-
-    -- Log successful password change
-    INSERT INTO auth.AuditLogs (UserId, Action, EntityType, EntityId, IpAddress, Success)
-    VALUES (p_UserId, 'PASSWORD_CHANGED', 'USER', p_UserId, p_IpAddress, TRUE);
-
-    RETURN QUERY SELECT TRUE, 'Password changed successfully'::TEXT;
-END;
-$$ LANGUAGE plpgsql;
-
--- =============================================
--- Procedure: Soft Delete User
--- =============================================
-CREATE OR REPLACE FUNCTION auth.sp_DeleteUser(
-    p_UserId UUID,
-    p_DeletedBy UUID DEFAULT NULL
-)
-RETURNS TABLE (
-    Success BOOLEAN,
-    Message TEXT
-) AS $$
-BEGIN
-    -- Check if user exists
-    IF NOT EXISTS (SELECT 1 FROM auth.Users WHERE UserId = p_UserId AND IsDeleted = FALSE) THEN
-        RETURN QUERY SELECT FALSE, 'User not found'::TEXT;
-        RETURN;
-    END IF;
-
-    -- Soft delete user
-    UPDATE auth.Users
-    SET IsDeleted = TRUE,
-        IsActive = FALSE,
-        DeletedAt = NOW(),
-        UpdatedAt = NOW()
-    WHERE UserId = p_UserId;
-
-    -- Revoke all tokens
-    UPDATE auth.RefreshTokens
-    SET IsRevoked = TRUE, RevokedAt = NOW()
-    WHERE UserId = p_UserId AND IsRevoked = FALSE;
-
-    -- End all sessions
-    UPDATE auth.UserSessions
-    SET IsActive = FALSE, EndedAt = NOW()
-    WHERE UserId = p_UserId AND IsActive = TRUE;
-
-    -- Log deletion
-    INSERT INTO auth.AuditLogs (UserId, Action, EntityType, EntityId, Success, AdditionalData)
-    VALUES (p_DeletedBy, 'USER_DELETED', 'USER', p_UserId, TRUE,
-            jsonb_build_object('deletedUserId', p_UserId, 'deletedBy', p_DeletedBy));
-
-    RETURN QUERY SELECT TRUE, 'User deleted successfully'::TEXT;
-END;
-$$ LANGUAGE plpgsql;
-
--- =============================================
 -- COMMENTS
 -- =============================================
 
 COMMENT ON FUNCTION auth.sp_RegisterUser IS 'Registers a new user with profile fields (FirstName, LastName, Handler, Gender, DOB)';
-COMMENT ON FUNCTION auth.sp_AuthenticateUser IS 'Authenticates user and returns user data with roles';
 COMMENT ON FUNCTION auth.sp_GetUserById IS 'Gets user details including profile fields';
 COMMENT ON FUNCTION auth.sp_UpdateUserProfile IS 'Updates user profile with new fields';
-COMMENT ON FUNCTION auth.sp_ChangePassword IS 'Changes user password with old password verification';
-COMMENT ON FUNCTION auth.sp_DeleteUser IS 'Soft deletes a user and revokes all tokens';

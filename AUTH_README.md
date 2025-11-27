@@ -123,7 +123,7 @@ All API responses follow a consistent format:
 
 ### 1. Register
 
-Create a new user account.
+Create a new user account with complete profile information.
 
 **Endpoint**: `POST /api/auth/register`
 **Authentication**: Not required
@@ -132,21 +132,31 @@ Create a new user account.
 
 ```json
 {
-  "username": "johndoe",
+  "firstName": "John",
+  "lastName": "Doe",
   "email": "john@example.com",
+  "phoneNumber": "+1234567890",
   "password": "SecurePassword123!",
-  "phoneNumber": "+1234567890"  // Optional
+  "gender": "Male",                    // MANDATORY: Male, Female, Other, PreferNotToSay
+  "dateOfBirth": "1990-01-15",         // MANDATORY: YYYY-MM-DD format
+  "handler": "johndoe_channel"         // Optional at registration, mandatory for channel creation
 }
 ```
+
+**Note**: Username is auto-generated from email (part before @). If the generated username already exists, a number will be appended (e.g., john1, john2, etc.)
 
 #### Request Schema
 
 | Field | Type | Required | Constraints |
 |-------|------|----------|-------------|
-| username | string | ✅ | Min 3 characters |
-| email | string | ✅ | Valid email format |
+| firstName | string | ✅ | Required, user's first name |
+| lastName | string | ✅ | Required, user's last name |
+| email | string | ✅ | Valid email format, unique |
+| phoneNumber | string | ✅ | Valid phone format, unique |
 | password | string | ✅ | Min 8 characters |
-| phoneNumber | string | ❌ | Valid phone format |
+| gender | string | ✅ | MANDATORY: Male, Female, Other, or PreferNotToSay |
+| dateOfBirth | date | ✅ | MANDATORY: Valid date, cannot be in future |
+| handler | string | ❌ | Optional: Min 3 chars if provided, unique (mandatory for channel creation) |
 
 #### Success Response (200 OK)
 
@@ -155,8 +165,12 @@ Create a new user account.
   "success": true,
   "data": {
     "userId": "550e8400-e29b-41d4-a716-446655440000",
+    "firstName": "John",
+    "lastName": "Doe",
     "username": "johndoe",
     "email": "john@example.com",
+    "phoneNumber": "+1234567890",
+    "handler": "johndoe_channel",
     "message": "Registration successful. Please verify your email."
   },
   "error": null,
@@ -170,19 +184,30 @@ Create a new user account.
 | Field | Type | Description |
 |-------|------|-------------|
 | userId | string (GUID) | Unique user identifier |
+| firstName | string | User's first name |
+| lastName | string | User's last name |
 | username | string | Username |
 | email | string | Email address |
+| phoneNumber | string | Phone number |
+| handler | string | Channel handler (if provided) |
 | message | string | Success message |
 
 #### Error Responses
 
 | Status | Error Message |
 |--------|---------------|
-| 400 | "Username must be at least 3 characters" |
+| 400 | "First name is required" |
+| 400 | "Last name is required" |
 | 400 | "Valid email is required" |
+| 400 | "Phone number is required" |
 | 400 | "Password must be at least 8 characters" |
+| 400 | "Gender is required" |
+| 400 | "Invalid gender value. Must be: Male, Female, Other, or PreferNotToSay" |
+| 400 | "Valid date of birth is required and cannot be in the future" |
+| 400 | "Handler must be at least 3 characters" |
 | 400 | "Email already registered" |
-| 400 | "Username already taken" |
+| 400 | "Phone number already registered" |
+| 400 | "Handler already taken" |
 
 ---
 
@@ -807,11 +832,29 @@ export interface ApiResponse<T> {
 const API_BASE_URL = 'http://localhost:5001/api/auth';
 
 export const authService = {
-  async register(username: string, email: string, password: string) {
+  async register(
+    firstName: string,
+    lastName: string,
+    email: string,
+    phoneNumber: string,
+    password: string,
+    gender: string,           // MANDATORY
+    dateOfBirth: Date,        // MANDATORY
+    handler?: string
+  ) {
     const response = await fetch(`${API_BASE_URL}/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email, password })
+      body: JSON.stringify({
+        firstName,
+        lastName,
+        email,
+        phoneNumber,
+        password,
+        gender,
+        dateOfBirth: dateOfBirth.toISOString().split('T')[0],  // Format: YYYY-MM-DD
+        handler
+      })
     });
     return await response.json();
   },
@@ -952,11 +995,20 @@ class AuthManager {
     this.baseURL = baseURL;
   }
 
-  async register(username, email, password) {
+  async register(firstName, lastName, email, phoneNumber, password, gender, dateOfBirth, handler = null) {
     const response = await fetch(`${this.baseURL}/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email, password })
+      body: JSON.stringify({
+        firstName,
+        lastName,
+        email,
+        phoneNumber,
+        password,
+        gender,            // MANDATORY
+        dateOfBirth,       // MANDATORY (YYYY-MM-DD format)
+        handler
+      })
     });
     return await response.json();
   }

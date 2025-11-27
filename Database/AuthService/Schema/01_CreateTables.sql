@@ -16,20 +16,35 @@ SET search_path TO auth, public;
 -- =============================================
 CREATE TABLE IF NOT EXISTS auth.Users (
     UserId UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    -- Profile Information
+    FirstName VARCHAR(100) NOT NULL,
+    LastName VARCHAR(100) NOT NULL,
     Username VARCHAR(50) NOT NULL UNIQUE,
     Email VARCHAR(255) NOT NULL UNIQUE,
+    PhoneNumber VARCHAR(20) NOT NULL UNIQUE,
+    Handler VARCHAR(50) UNIQUE,
+    Gender VARCHAR(20) NOT NULL,
+    DateOfBirth DATE NOT NULL,
+
+    -- Verification Status
     EmailVerified BOOLEAN NOT NULL DEFAULT FALSE,
-    PhoneNumber VARCHAR(20),
     PhoneNumberVerified BOOLEAN NOT NULL DEFAULT FALSE,
+
+    -- Security
     PasswordHash VARCHAR(255) NOT NULL,
     SecurityStamp UUID NOT NULL DEFAULT gen_random_uuid(), -- Changes when password/security settings change
     TwoFactorEnabled BOOLEAN NOT NULL DEFAULT FALSE,
     TwoFactorSecret VARCHAR(255), -- For TOTP
+
+    -- Account Status
     LockoutEnabled BOOLEAN NOT NULL DEFAULT TRUE,
     LockoutEnd TIMESTAMP WITH TIME ZONE,
     AccessFailedCount INTEGER NOT NULL DEFAULT 0,
     IsActive BOOLEAN NOT NULL DEFAULT TRUE,
     IsDeleted BOOLEAN NOT NULL DEFAULT FALSE,
+
+    -- Timestamps
     CreatedAt TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     UpdatedAt TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     LastLoginAt TIMESTAMP WITH TIME ZONE,
@@ -38,7 +53,10 @@ CREATE TABLE IF NOT EXISTS auth.Users (
     -- Constraints
     CONSTRAINT chk_username_length CHECK (LENGTH(Username) >= 3),
     CONSTRAINT chk_email_format CHECK (Email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
-    CONSTRAINT chk_access_failed_count CHECK (AccessFailedCount >= 0)
+    CONSTRAINT chk_access_failed_count CHECK (AccessFailedCount >= 0),
+    CONSTRAINT chk_handler_length CHECK (Handler IS NULL OR LENGTH(Handler) >= 3),
+    CONSTRAINT chk_gender_values CHECK (Gender IN ('Male', 'Female', 'Other', 'PreferNotToSay')),
+    CONSTRAINT chk_dob_valid CHECK (DateOfBirth <= CURRENT_DATE)
 );
 
 -- =============================================
@@ -226,6 +244,8 @@ CREATE TABLE IF NOT EXISTS auth.ExternalLoginProviders (
 -- Users table indexes
 CREATE INDEX IF NOT EXISTS idx_users_email ON auth.Users(Email) WHERE IsDeleted = FALSE;
 CREATE INDEX IF NOT EXISTS idx_users_username ON auth.Users(Username) WHERE IsDeleted = FALSE;
+CREATE INDEX IF NOT EXISTS idx_users_phonenumber ON auth.Users(PhoneNumber) WHERE IsDeleted = FALSE;
+CREATE INDEX IF NOT EXISTS idx_users_handler ON auth.Users(Handler) WHERE Handler IS NOT NULL AND IsDeleted = FALSE;
 CREATE INDEX IF NOT EXISTS idx_users_isactive ON auth.Users(IsActive) WHERE IsDeleted = FALSE;
 CREATE INDEX IF NOT EXISTS idx_users_createdat ON auth.Users(CreatedAt DESC);
 CREATE INDEX IF NOT EXISTS idx_users_lastloginat ON auth.Users(LastLoginAt DESC);

@@ -5,7 +5,17 @@ namespace AuthService.Api.Repositories;
 
 public interface IAuthRepository
 {
-    Task<Result<UserDto>> RegisterUserAsync(string username, string email, string passwordHash, string? phoneNumber, string roleName = "User");
+    Task<Result<UserDto>> RegisterUserAsync(
+        string firstName,
+        string lastName,
+        string username,
+        string email,
+        string phoneNumber,
+        string passwordHash,
+        string gender,           // MANDATORY
+        DateTime dateOfBirth,    // MANDATORY
+        string? handler = null,
+        string roleName = "User");
     Task<Result<UserAuthDto>> AuthenticateUserAsync(string emailOrUsername, string providedPassword);
     Task<Result<UserDto>> GetUserByIdAsync(Guid userId);
     Task<Result<bool>> UpdateUserProfileAsync(Guid userId, string? username, string? phoneNumber, string? bio, string? avatarUrl);

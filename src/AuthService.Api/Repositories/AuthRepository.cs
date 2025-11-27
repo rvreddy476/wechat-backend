@@ -20,7 +20,17 @@ public class AuthRepository : IAuthRepository
 
     private IDbConnection CreateConnection() => new NpgsqlConnection(_connectionString);
 
-    public async Task<Result<UserDto>> RegisterUserAsync(string username, string email, string passwordHash, string? phoneNumber, string roleName = "User")
+    public async Task<Result<UserDto>> RegisterUserAsync(
+        string firstName,
+        string lastName,
+        string username,
+        string email,
+        string phoneNumber,
+        string passwordHash,
+        string gender,           // MANDATORY
+        DateTime dateOfBirth,    // MANDATORY
+        string? handler = null,
+        string roleName = "User")
     {
         try
         {
@@ -28,11 +38,17 @@ public class AuthRepository : IAuthRepository
 
             var parameters = new
             {
+                p_first_name = firstName,
+                p_last_name = lastName,
                 p_username = username,
                 p_email = email,
                 p_password_hash = passwordHash,
                 p_phone_number = phoneNumber,
-                p_role_name = roleName
+                p_handler = handler,
+                p_gender = gender,
+                p_date_of_birth = dateOfBirth,
+                p_ip_address = (string?)null,
+                p_user_agent = (string?)null
             };
 
             var result = await connection.QueryFirstOrDefaultAsync<dynamic>(
@@ -49,9 +65,12 @@ public class AuthRepository : IAuthRepository
             var userDto = new UserDto
             {
                 UserId = result.user_id,
+                FirstName = result.first_name,
+                LastName = result.last_name,
                 Username = result.username,
                 Email = result.email,
                 PhoneNumber = result.phone_number,
+                Handler = result.handler,
                 IsEmailVerified = result.is_email_verified,
                 IsPhoneVerified = result.is_phone_verified,
                 IsActive = result.is_active,
@@ -65,12 +84,22 @@ public class AuthRepository : IAuthRepository
 
             return Result<UserDto>.Success(userDto);
         }
+        catch (PostgresException ex) when (ex.SqlState == "P0001") // raise_exception
+        {
+            var errorMessage = ex.MessageText ?? "Registration failed";
+            _logger.LogWarning("Registration failed: {Error}", errorMessage);
+            return Result<UserDto>.Failure(errorMessage);
+        }
         catch (PostgresException ex) when (ex.SqlState == "23505") // Unique violation
         {
             if (ex.ConstraintName?.Contains("email") == true)
                 return Result.Failure<UserDto>(Errors.Authentication.DuplicateEmail);
             if (ex.ConstraintName?.Contains("username") == true)
-                return Result.Failure<UserDto>(Errors.Authentication.DuplicateUsername);
+                return Result<UserDto>.Failure(Errors.Authentication.DuplicateUsername);
+            if (ex.ConstraintName?.Contains("phone") == true)
+                return Result<UserDto>.Failure("Phone number already registered");
+            if (ex.ConstraintName?.Contains("handler") == true)
+                return Result<UserDto>.Failure("Handler already taken");
 
             return Result.Failure<UserDto>("Registration failed: Duplicate entry");
         }
