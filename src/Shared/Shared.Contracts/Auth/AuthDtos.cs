@@ -76,3 +76,31 @@ public record VerifyEmailRequest
 {
     public required string Token { get; init; }
 }
+
+// Verification Code DTOs
+public record SendVerificationCodeRequest
+{
+    public required string Target { get; init; } // Email or Phone number
+    public required string VerificationType { get; init; } // "Email" or "Phone"
+}
+
+public record VerifyCodeRequest
+{
+    public required string Code { get; init; } // 6-digit code
+    public required string VerificationType { get; init; } // "Email" or "Phone"
+}
+
+public record SendVerificationCodeResponse
+{
+    public required string Message { get; init; }
+    public required string Target { get; init; } // Email or phone (partially masked)
+    public required DateTime ExpiresAt { get; init; }
+}
+
+public record VerifyCodeResponse
+{
+    public required bool IsValid { get; init; }
+    public required string Message { get; init; }
+    public bool EmailVerified { get; init; }
+    public bool PhoneVerified { get; init; }
+}
