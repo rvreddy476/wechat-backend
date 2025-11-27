@@ -27,7 +27,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating conversation");
-            return Result<Conversation>.Failure("Failed to create conversation");
+            return Result.Failure<Conversation>("Failed to create conversation");
         }
     }
 
@@ -40,7 +40,7 @@ public class ChatRepository : IChatRepository
 
             if (conversation == null)
             {
-                return Result<Conversation>.Failure("Conversation not found");
+                return Result.Failure<Conversation>("Conversation not found");
             }
 
             return Result<Conversation>.Success(conversation);
@@ -48,7 +48,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting conversation {ConversationId}", conversationId);
-            return Result<Conversation>.Failure("Failed to get conversation");
+            return Result.Failure<Conversation>("Failed to get conversation");
         }
     }
 
@@ -65,7 +65,7 @@ public class ChatRepository : IChatRepository
 
             if (conversation == null)
             {
-                return Result<Conversation>.Failure("Conversation not found");
+                return Result.Failure<Conversation>("Conversation not found");
             }
 
             return Result<Conversation>.Success(conversation);
@@ -73,7 +73,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting one-to-one conversation between {User1} and {User2}", user1Id, user2Id);
-            return Result<Conversation>.Failure("Failed to get conversation");
+            return Result.Failure<Conversation>("Failed to get conversation");
         }
     }
 
@@ -95,7 +95,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting conversations for user {UserId}", userId);
-            return Result<List<Conversation>>.Failure("Failed to get conversations");
+            return Result.Failure<List<Conversation>>("Failed to get conversations");
         }
     }
 
@@ -112,7 +112,7 @@ public class ChatRepository : IChatRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Conversation not found");
+                return Result.Failure<bool>("Conversation not found");
             }
 
             return Result<bool>.Success(true);
@@ -120,7 +120,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating conversation {ConversationId}", conversationId);
-            return Result<bool>.Failure("Failed to update conversation");
+            return Result.Failure<bool>("Failed to update conversation");
         }
     }
 
@@ -136,7 +136,7 @@ public class ChatRepository : IChatRepository
 
             if (conversation == null)
             {
-                return Result<bool>.Failure("Conversation not found");
+                return Result.Failure<bool>("Conversation not found");
             }
 
             if (conversation.Type == ConversationType.OneToOne)
@@ -160,7 +160,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting conversation {ConversationId}", conversationId);
-            return Result<bool>.Failure("Failed to delete conversation");
+            return Result.Failure<bool>("Failed to delete conversation");
         }
     }
 
@@ -179,7 +179,7 @@ public class ChatRepository : IChatRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Conversation not found");
+                return Result.Failure<bool>("Conversation not found");
             }
 
             return Result<bool>.Success(true);
@@ -187,7 +187,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error adding participant to conversation {ConversationId}", conversationId);
-            return Result<bool>.Failure("Failed to add participant");
+            return Result.Failure<bool>("Failed to add participant");
         }
     }
 
@@ -206,7 +206,7 @@ public class ChatRepository : IChatRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Conversation not found");
+                return Result.Failure<bool>("Conversation not found");
             }
 
             return Result<bool>.Success(true);
@@ -214,7 +214,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing participant from conversation {ConversationId}", conversationId);
-            return Result<bool>.Failure("Failed to remove participant");
+            return Result.Failure<bool>("Failed to remove participant");
         }
     }
 
@@ -236,7 +236,7 @@ public class ChatRepository : IChatRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Conversation or participant not found");
+                return Result.Failure<bool>("Conversation or participant not found");
             }
 
             return Result<bool>.Success(true);
@@ -244,7 +244,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating last read for user {UserId} in conversation {ConversationId}", userId, conversationId);
-            return Result<bool>.Failure("Failed to update last read");
+            return Result.Failure<bool>("Failed to update last read");
         }
     }
 
@@ -266,7 +266,7 @@ public class ChatRepository : IChatRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Conversation or participant not found");
+                return Result.Failure<bool>("Conversation or participant not found");
             }
 
             return Result<bool>.Success(true);
@@ -274,7 +274,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error muting conversation {ConversationId} for user {UserId}", conversationId, userId);
-            return Result<bool>.Failure("Failed to mute conversation");
+            return Result.Failure<bool>("Failed to mute conversation");
         }
     }
 
@@ -306,7 +306,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending message to conversation {ConversationId}", message.ConversationId);
-            return Result<Message>.Failure("Failed to send message");
+            return Result.Failure<Message>("Failed to send message");
         }
     }
 
@@ -319,7 +319,7 @@ public class ChatRepository : IChatRepository
 
             if (message == null)
             {
-                return Result<Message>.Failure("Message not found");
+                return Result.Failure<Message>("Message not found");
             }
 
             return Result<Message>.Success(message);
@@ -327,7 +327,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting message {MessageId}", messageId);
-            return Result<Message>.Failure("Failed to get message");
+            return Result.Failure<Message>("Failed to get message");
         }
     }
 
@@ -346,7 +346,7 @@ public class ChatRepository : IChatRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Message not found");
+                return Result.Failure<bool>("Message not found");
             }
 
             return Result<bool>.Success(true);
@@ -354,7 +354,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating message {MessageId}", messageId);
-            return Result<bool>.Failure("Failed to update message");
+            return Result.Failure<bool>("Failed to update message");
         }
     }
 
@@ -387,7 +387,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting message {MessageId}", messageId);
-            return Result<bool>.Failure("Failed to delete message");
+            return Result.Failure<bool>("Failed to delete message");
         }
     }
 
@@ -409,7 +409,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting messages for conversation {ConversationId}", conversationId);
-            return Result<List<Message>>.Failure("Failed to get messages");
+            return Result.Failure<List<Message>>("Failed to get messages");
         }
     }
 
@@ -433,7 +433,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting messages before {Before} for conversation {ConversationId}", before, conversationId);
-            return Result<List<Message>>.Failure("Failed to get messages");
+            return Result.Failure<List<Message>>("Failed to get messages");
         }
     }
 
@@ -455,7 +455,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting messages after {After} for conversation {ConversationId}", after, conversationId);
-            return Result<List<Message>>.Failure("Failed to get messages");
+            return Result.Failure<List<Message>>("Failed to get messages");
         }
     }
 
@@ -480,7 +480,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error marking message {MessageId} as read for user {UserId}", messageId, userId);
-            return Result<bool>.Failure("Failed to mark message as read");
+            return Result.Failure<bool>("Failed to mark message as read");
         }
     }
 
@@ -504,7 +504,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error marking conversation {ConversationId} as read for user {UserId}", conversationId, userId);
-            return Result<bool>.Failure("Failed to mark conversation as read");
+            return Result.Failure<bool>("Failed to mark conversation as read");
         }
     }
 
@@ -517,13 +517,13 @@ public class ChatRepository : IChatRepository
 
             if (conversation == null)
             {
-                return Result<int>.Failure("Conversation not found");
+                return Result.Failure<int>("Conversation not found");
             }
 
             var participant = conversation.Participants.FirstOrDefault(p => p.UserId == userId);
             if (participant == null)
             {
-                return Result<int>.Failure("User is not a participant");
+                return Result.Failure<int>("User is not a participant");
             }
 
             var lastReadAt = participant.LastReadAt ?? DateTime.MinValue;
@@ -540,7 +540,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting unread count for conversation {ConversationId}", conversationId);
-            return Result<int>.Failure("Failed to get unread count");
+            return Result.Failure<int>("Failed to get unread count");
         }
     }
 
@@ -565,7 +565,7 @@ public class ChatRepository : IChatRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error searching messages in conversation {ConversationId}", conversationId);
-            return Result<List<Message>>.Failure("Failed to search messages");
+            return Result.Failure<List<Message>>("Failed to search messages");
         }
     }
 }

@@ -5,7 +5,6 @@ using System.Text;
 using NotificationService.Api.Repositories;
 using NotificationService.Api.Services;
 using NotificationService.Api.Hubs;
-using Shared.Infrastructure.Authentication;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -80,7 +79,7 @@ builder.Services.AddSignalR()
 // Application Services
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddSingleton<IPushService, FcmPushService>();
-builder.Services.AddScoped<INotificationService, Services.NotificationService>();
+builder.Services.AddScoped<INotificationService, NotificationService.Api.Services.NotificationService>();
 
 // Health Checks
 builder.Services.AddHealthChecks()

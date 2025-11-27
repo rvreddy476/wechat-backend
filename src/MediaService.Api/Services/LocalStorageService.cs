@@ -49,12 +49,12 @@ public class LocalStorageService : IStorageService
             }
 
             _logger.LogInformation("Uploaded file to local storage: {StoragePath}", storagePath);
-            return Result<string>.Success(storagePath);
+            return Result.Success<string>(storagePath);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error uploading file to local storage: {Filename}", filename);
-            return Result<string>.Failure($"Failed to upload file: {ex.Message}");
+            return Result.Failure<string>($"Failed to upload file: {ex.Message}");
         }
     }
 
@@ -66,7 +66,7 @@ public class LocalStorageService : IStorageService
 
             if (!File.Exists(fullPath))
             {
-                return Result<Stream>.Failure("File not found");
+                return Result.Failure<Stream>("File not found");
             }
 
             var memoryStream = new MemoryStream();
@@ -76,12 +76,12 @@ public class LocalStorageService : IStorageService
             }
 
             memoryStream.Position = 0;
-            return Result<Stream>.Success(memoryStream);
+            return Result.Success<Stream>(memoryStream);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error downloading file from local storage: {StoragePath}", storagePath);
-            return Result<Stream>.Failure($"Failed to download file: {ex.Message}");
+            return Result.Failure<Stream>($"Failed to download file: {ex.Message}");
         }
     }
 
@@ -97,12 +97,12 @@ public class LocalStorageService : IStorageService
                 _logger.LogInformation("Deleted file from local storage: {StoragePath}", storagePath);
             }
 
-            return Task.FromResult(Result<bool>.Success(true));
+            return Task.FromResult(Result.Success<bool>(true));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting file from local storage: {StoragePath}", storagePath);
-            return Task.FromResult(Result<bool>.Failure($"Failed to delete file: {ex.Message}"));
+            return Task.FromResult(Result.Failure<bool>($"Failed to delete file: {ex.Message}"));
         }
     }
 
@@ -121,17 +121,17 @@ public class LocalStorageService : IStorageService
             if (!string.IsNullOrEmpty(_baseUrl))
             {
                 var url = $"{_baseUrl.TrimEnd('/')}/{storagePath}";
-                return Task.FromResult(Result<string>.Success(url));
+                return Task.FromResult(Result.Success<string>(url));
             }
 
             // Otherwise return relative path
             var relativeUrl = $"/media/{storagePath}";
-            return Task.FromResult(Result<string>.Success(relativeUrl));
+            return Task.FromResult(Result.Success<string>(relativeUrl));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting public URL: {StoragePath}", storagePath);
-            return Task.FromResult(Result<string>.Failure($"Failed to get public URL: {ex.Message}"));
+            return Task.FromResult(Result.Failure<string>($"Failed to get public URL: {ex.Message}"));
         }
     }
 
@@ -144,7 +144,7 @@ public class LocalStorageService : IStorageService
 
             if (!File.Exists(sourcePath))
             {
-                return Result<bool>.Failure("Source file not found");
+                return Result.Failure<bool>("Source file not found");
             }
 
             // Ensure destination directory exists
@@ -158,12 +158,12 @@ public class LocalStorageService : IStorageService
             await Task.CompletedTask;
 
             _logger.LogInformation("Copied file from {Source} to {Destination}", sourceStoragePath, destinationStoragePath);
-            return Result<bool>.Success(true);
+            return Result.Success<bool>(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error copying file from {Source} to {Destination}", sourceStoragePath, destinationStoragePath);
-            return Result<bool>.Failure($"Failed to copy file: {ex.Message}");
+            return Result.Failure<bool>($"Failed to copy file: {ex.Message}");
         }
     }
 }

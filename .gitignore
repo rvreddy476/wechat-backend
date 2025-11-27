@@ -19,3 +19,15 @@
 /src/VideoService.Api/obj
 /src/AuthService.Api/obj
 /src/ChatService.Api/obj
+/src/AuthService.Api/bin/Debug/net8.0
+/src/NotificationService.Api/bin/Debug/net8.0
+/src/PostFeedService.Api/bin/Debug/net8.0
+/src/Realtime.Api/bin/Debug/net8.0
+/src/UserProfileService.Api/bin/Debug/net8.0
+/src/VideoProcessing.Worker/bin/Debug/net8.0
+/src/VideoProcessing.Worker/obj
+/src/VideoService.Api/bin/Debug/net8.0
+/src/ChatService.Api/bin/Debug/net8.0
+/src/Gateway.Api/bin/Debug/net8.0
+/src/MediaService.Api/bin/Debug/net8.0
+/src/VideoProcessing.Worker/logs/video-processing-20251126.txt
