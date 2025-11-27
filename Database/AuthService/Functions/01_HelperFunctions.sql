@@ -1,46 +1,5 @@
--- =============================================
--- WeChat.com - AuthService Helper Functions
--- Purpose: Query and utility functions
--- =============================================
 
-SET search_path TO auth, public;
 
--- =============================================
--- Function: Check if user is in role
--- =============================================
-CREATE OR REPLACE FUNCTION auth.fn_IsUserInRole(
-    p_UserId UUID,
-    p_RoleName VARCHAR(50)
-)
-RETURNS BOOLEAN AS $$
-BEGIN
-    RETURN EXISTS (
-        SELECT 1
-        FROM auth.UserRoles ur
-        JOIN auth.Roles r ON ur.RoleId = r.RoleId
-        WHERE ur.UserId = p_UserId
-          AND r.RoleName = p_RoleName
-    );
-END;
-$$ LANGUAGE plpgsql STABLE;
-
--- =============================================
--- Function: Get user roles as array
--- =============================================
-CREATE OR REPLACE FUNCTION auth.fn_GetUserRoles(
-    p_UserId UUID
-)
-RETURNS TEXT[] AS $$
-BEGIN
-    RETURN ARRAY(
-        SELECT r.RoleName
-        FROM auth.UserRoles ur
-        JOIN auth.Roles r ON ur.RoleId = r.RoleId
-        WHERE ur.UserId = p_UserId
-        ORDER BY r.RoleName
-    );
-END;
-$$ LANGUAGE plpgsql STABLE;
 
 -- =============================================
 -- Function: Check if account is locked
@@ -223,24 +182,26 @@ $$ LANGUAGE plpgsql STABLE;
 -- =============================================
 CREATE OR REPLACE FUNCTION auth.fn_GetUserAuditLog(
     p_UserId UUID,
-    p_Limit INTEGER DEFAULT 50,
+    p_Limit  INTEGER DEFAULT 50,
     p_Offset INTEGER DEFAULT 0
 )
 RETURNS TABLE (
-    LogId UUID,
-    Action VARCHAR(100),
-    Timestamp TIMESTAMP WITH TIME ZONE,
-    IpAddress VARCHAR(45),
-    Success BOOLEAN,
-    FailureReason TEXT,
+    LogId          UUID,
+    Action         VARCHAR(100),
+    EventTimestamp TIMESTAMPTZ,
+    IpAddress      VARCHAR(45),
+    Success        BOOLEAN,
+    FailureReason  TEXT,
     AdditionalData JSONB
-) AS $$
+)
+LANGUAGE plpgsql
+AS $$
 BEGIN
     RETURN QUERY
     SELECT
         al.LogId,
         al.Action,
-        al.Timestamp,
+        al.Timestamp AS EventTimestamp,
         al.IpAddress,
         al.Success,
         al.FailureReason,
@@ -251,7 +212,9 @@ BEGIN
     LIMIT p_Limit
     OFFSET p_Offset;
 END;
-$$ LANGUAGE plpgsql STABLE;
+$$;
+
+
 
 -- =============================================
 -- Function: Get system statistics (for admin dashboard)
