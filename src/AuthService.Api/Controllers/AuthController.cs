@@ -5,6 +5,7 @@ using System.Text;
 using AuthService.Api.Extensions;
 using AuthService.Api.Models;
 using AuthService.Api.Repositories;
+using AuthService.Api.Services;
 using Shared.Contracts.Auth;
 using Shared.Contracts.Common;
 using Shared.Infrastructure.Authentication;
@@ -18,15 +19,18 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthRepository _authRepository;
     private readonly IJwtService _jwtService;
+    private readonly IVerificationService _verificationService;
     private readonly ILogger<AuthController> _logger;
 
     public AuthController(
         IAuthRepository authRepository,
         IJwtService jwtService,
+        IVerificationService verificationService,
         ILogger<AuthController> logger)
     {
         _authRepository = authRepository;
         _jwtService = jwtService;
+        _verificationService = verificationService;
         _logger = logger;
     }
 
@@ -63,14 +67,30 @@ public class AuthController : ControllerBase
 
         var user = result.Value;
 
-        // Generate email verification token
-        var verificationToken = GenerateSecureToken();
-        var verificationTokenHash = HashToken(verificationToken);
-        var expiresAt = DateTime.UtcNow.AddDays(1);
+        // Send verification codes for both email and phone
+        var emailVerificationResult = await _verificationService.SendEmailVerificationCodeAsync(
+            user.UserId,
+            user.Email,
+            user.FirstName
+        );
 
-        await _authRepository.CreateEmailVerificationTokenAsync(user.UserId, verificationTokenHash, expiresAt);
+        var phoneVerificationResult = await _verificationService.SendPhoneVerificationCodeAsync(
+            user.UserId,
+            user.PhoneNumber!
+        );
 
-        // TODO: Send verification email with token
+        // Log if verification codes failed to send (but don't fail registration)
+        if (!emailVerificationResult.IsSuccess)
+        {
+            _logger.LogWarning("Failed to send email verification code for user {UserId}: {Error}",
+                user.UserId, emailVerificationResult.Error);
+        }
+
+        if (!phoneVerificationResult.IsSuccess)
+        {
+            _logger.LogWarning("Failed to send phone verification code for user {UserId}: {Error}",
+                user.UserId, phoneVerificationResult.Error);
+        }
 
         var response = new RegisterResponse
         {
@@ -81,7 +101,7 @@ public class AuthController : ControllerBase
             Email = user.Email,
             PhoneNumber = user.PhoneNumber!,
             Handler = user.Handler,
-            Message = "Registration successful. Please verify your email."
+            Message = "Registration successful. Verification codes sent to your email and phone."
         };
 
         return Ok(ApiResponse<RegisterResponse>.SuccessResponse(response));
@@ -435,6 +455,234 @@ public class AuthController : ControllerBase
         return Ok(ApiResponse<UserDto>.SuccessResponse(result.Value));
     }
 
+    /// <summary>
+    /// Send verification code to email or phone
+    /// </summary>
+    [Authorize]
+    [HttpPost("send-verification-code")]
+    public async Task<ActionResult<ApiResponse<SendVerificationCodeResponse>>> SendVerificationCode(
+        [FromBody] SendVerificationCodeRequest request)
+    {
+        var userId = _jwtService.GetUserIdFromToken(User);
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized(ApiResponse<SendVerificationCodeResponse>.ErrorResponse("Invalid token"));
+        }
+
+        // Validate request
+        if (string.IsNullOrWhiteSpace(request.Target))
+        {
+            return BadRequest(ApiResponse<SendVerificationCodeResponse>.ErrorResponse("Target (email or phone) is required"));
+        }
+
+        if (string.IsNullOrWhiteSpace(request.VerificationType))
+        {
+            return BadRequest(ApiResponse<SendVerificationCodeResponse>.ErrorResponse("Verification type is required"));
+        }
+
+        if (request.VerificationType != "Email" && request.VerificationType != "Phone")
+        {
+            return BadRequest(ApiResponse<SendVerificationCodeResponse>.ErrorResponse("Verification type must be 'Email' or 'Phone'"));
+        }
+
+        // Get user details
+        var userResult = await _authRepository.GetUserByIdAsync(Guid.Parse(userId));
+        if (!userResult.IsSuccess)
+        {
+            return NotFound(ApiResponse<SendVerificationCodeResponse>.ErrorResponse("User not found"));
+        }
+
+        var user = userResult.Value;
+
+        // Send verification code
+        Result<VerificationCode> result;
+        if (request.VerificationType == "Email")
+        {
+            result = await _verificationService.SendEmailVerificationCodeAsync(
+                Guid.Parse(userId),
+                request.Target,
+                user.FirstName
+            );
+        }
+        else
+        {
+            result = await _verificationService.SendPhoneVerificationCodeAsync(
+                Guid.Parse(userId),
+                request.Target
+            );
+        }
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(ApiResponse<SendVerificationCodeResponse>.ErrorResponse(result.Error));
+        }
+
+        var verificationCode = result.Value;
+
+        // Mask the target for security (show only last 4 chars)
+        var maskedTarget = request.VerificationType == "Email"
+            ? MaskEmail(request.Target)
+            : MaskPhone(request.Target);
+
+        var response = new SendVerificationCodeResponse
+        {
+            Message = $"Verification code sent to {maskedTarget}",
+            Target = maskedTarget,
+            ExpiresAt = verificationCode.ExpiresAt
+        };
+
+        return Ok(ApiResponse<SendVerificationCodeResponse>.SuccessResponse(response));
+    }
+
+    /// <summary>
+    /// Verify a 6-digit code
+    /// </summary>
+    [Authorize]
+    [HttpPost("verify-code")]
+    public async Task<ActionResult<ApiResponse<VerifyCodeResponse>>> VerifyCode(
+        [FromBody] VerifyCodeRequest request)
+    {
+        var userId = _jwtService.GetUserIdFromToken(User);
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized(ApiResponse<VerifyCodeResponse>.ErrorResponse("Invalid token"));
+        }
+
+        // Validate request
+        if (string.IsNullOrWhiteSpace(request.Code))
+        {
+            return BadRequest(ApiResponse<VerifyCodeResponse>.ErrorResponse("Verification code is required"));
+        }
+
+        if (request.Code.Length != 6 || !request.Code.All(char.IsDigit))
+        {
+            return BadRequest(ApiResponse<VerifyCodeResponse>.ErrorResponse("Verification code must be 6 digits"));
+        }
+
+        if (string.IsNullOrWhiteSpace(request.VerificationType))
+        {
+            return BadRequest(ApiResponse<VerifyCodeResponse>.ErrorResponse("Verification type is required"));
+        }
+
+        if (request.VerificationType != "Email" && request.VerificationType != "Phone")
+        {
+            return BadRequest(ApiResponse<VerifyCodeResponse>.ErrorResponse("Verification type must be 'Email' or 'Phone'"));
+        }
+
+        // Parse verification type
+        var verificationType = request.VerificationType == "Email"
+            ? VerificationType.Email
+            : VerificationType.Phone;
+
+        // Verify code
+        var result = await _verificationService.VerifyCodeAsync(
+            Guid.Parse(userId),
+            request.Code,
+            verificationType
+        );
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(ApiResponse<VerifyCodeResponse>.ErrorResponse(result.Error));
+        }
+
+        // Get updated user details
+        var userResult = await _authRepository.GetUserByIdAsync(Guid.Parse(userId));
+        if (!userResult.IsSuccess)
+        {
+            return NotFound(ApiResponse<VerifyCodeResponse>.ErrorResponse("User not found"));
+        }
+
+        var user = userResult.Value;
+
+        var response = new VerifyCodeResponse
+        {
+            IsValid = true,
+            Message = result.Message ?? "Verification successful",
+            EmailVerified = user.IsEmailVerified,
+            PhoneVerified = user.IsPhoneVerified
+        };
+
+        return Ok(ApiResponse<VerifyCodeResponse>.SuccessResponse(response));
+    }
+
+    /// <summary>
+    /// Resend verification code
+    /// </summary>
+    [Authorize]
+    [HttpPost("resend-verification-code")]
+    public async Task<ActionResult<ApiResponse<SendVerificationCodeResponse>>> ResendVerificationCode(
+        [FromBody] SendVerificationCodeRequest request)
+    {
+        var userId = _jwtService.GetUserIdFromToken(User);
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized(ApiResponse<SendVerificationCodeResponse>.ErrorResponse("Invalid token"));
+        }
+
+        // Validate request
+        if (string.IsNullOrWhiteSpace(request.Target))
+        {
+            return BadRequest(ApiResponse<SendVerificationCodeResponse>.ErrorResponse("Target (email or phone) is required"));
+        }
+
+        if (string.IsNullOrWhiteSpace(request.VerificationType))
+        {
+            return BadRequest(ApiResponse<SendVerificationCodeResponse>.ErrorResponse("Verification type is required"));
+        }
+
+        if (request.VerificationType != "Email" && request.VerificationType != "Phone")
+        {
+            return BadRequest(ApiResponse<SendVerificationCodeResponse>.ErrorResponse("Verification type must be 'Email' or 'Phone'"));
+        }
+
+        // Get user details
+        var userResult = await _authRepository.GetUserByIdAsync(Guid.Parse(userId));
+        if (!userResult.IsSuccess)
+        {
+            return NotFound(ApiResponse<SendVerificationCodeResponse>.ErrorResponse("User not found"));
+        }
+
+        var user = userResult.Value;
+
+        // Parse verification type
+        var verificationType = request.VerificationType == "Email"
+            ? VerificationType.Email
+            : VerificationType.Phone;
+
+        // Resend verification code
+        var result = await _verificationService.ResendVerificationCodeAsync(
+            Guid.Parse(userId),
+            verificationType,
+            request.Target,
+            user.FirstName
+        );
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(ApiResponse<SendVerificationCodeResponse>.ErrorResponse(result.Error));
+        }
+
+        var verificationCode = result.Value;
+
+        // Mask the target for security
+        var maskedTarget = request.VerificationType == "Email"
+            ? MaskEmail(request.Target)
+            : MaskPhone(request.Target);
+
+        var response = new SendVerificationCodeResponse
+        {
+            Message = $"Verification code sent to {maskedTarget}",
+            Target = maskedTarget,
+            ExpiresAt = verificationCode.ExpiresAt
+        };
+
+        return Ok(ApiResponse<SendVerificationCodeResponse>.SuccessResponse(response));
+    }
+
     private static string GenerateSecureToken()
     {
         var randomBytes = new byte[32];
@@ -448,5 +696,36 @@ public class AuthController : ControllerBase
         using var sha256 = SHA256.Create();
         var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(token));
         return Convert.ToBase64String(hashBytes);
+    }
+
+    private static string MaskEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+        {
+            return "***";
+        }
+
+        var parts = email.Split('@');
+        var localPart = parts[0];
+        var domain = parts[1];
+
+        if (localPart.Length <= 2)
+        {
+            return $"{localPart[0]}***@{domain}";
+        }
+
+        var maskedLocal = $"{localPart[0]}***{localPart[^1]}";
+        return $"{maskedLocal}@{domain}";
+    }
+
+    private static string MaskPhone(string phoneNumber)
+    {
+        if (string.IsNullOrWhiteSpace(phoneNumber) || phoneNumber.Length < 4)
+        {
+            return "***";
+        }
+
+        var lastFour = phoneNumber.Substring(phoneNumber.Length - 4);
+        return $"***{lastFour}";
     }
 }

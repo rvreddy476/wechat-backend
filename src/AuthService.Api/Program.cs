@@ -1,5 +1,6 @@
 using Serilog;
 using AuthService.Api.Repositories;
+using AuthService.Api.Services;
 using Shared.Infrastructure.Authentication;
 using Shared.Infrastructure.Redis;
 
@@ -66,6 +67,11 @@ builder.Services.AddRedis(builder.Configuration);
 
 // Add repositories
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+
+// Add services
+builder.Services.AddScoped<IVerificationService, VerificationService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<ISmsService, SmsService>();
 
 // Add health checks
 builder.Services.AddHealthChecks()
