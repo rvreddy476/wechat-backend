@@ -44,7 +44,7 @@ public class ApiResponse<T>
 /// </summary>
 public class ApiResponse : ApiResponse<object>
 {
-    public static ApiResponse Success()
+    public static ApiResponse SuccessResponse()
     {
         return new ApiResponse
         {

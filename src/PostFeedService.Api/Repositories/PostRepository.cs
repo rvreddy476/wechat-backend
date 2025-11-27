@@ -38,7 +38,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating post for user {UserId}", post.UserId);
-            return Result<Post>.Failure("Failed to create post");
+            return Result.Failure<Post>("Failed to create post");
         }
     }
 
@@ -51,7 +51,7 @@ public class PostRepository : IPostRepository
 
             if (post == null)
             {
-                return Result<Post>.Failure("Post not found");
+                return Result.Failure<Post>("Post not found");
             }
 
             return Result<Post>.Success(post);
@@ -59,7 +59,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting post {PostId}", postId);
-            return Result<Post>.Failure("Failed to get post");
+            return Result.Failure<Post>("Failed to get post");
         }
     }
 
@@ -76,7 +76,7 @@ public class PostRepository : IPostRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Post not found");
+                return Result.Failure<bool>("Post not found");
             }
 
             return Result<bool>.Success(true);
@@ -84,7 +84,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating post {PostId}", postId);
-            return Result<bool>.Failure("Failed to update post");
+            return Result.Failure<bool>("Failed to update post");
         }
     }
 
@@ -104,7 +104,7 @@ public class PostRepository : IPostRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Post not found or unauthorized");
+                return Result.Failure<bool>("Post not found or unauthorized");
             }
 
             return Result<bool>.Success(true);
@@ -112,7 +112,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting post {PostId}", postId);
-            return Result<bool>.Failure("Failed to delete post");
+            return Result.Failure<bool>("Failed to delete post");
         }
     }
 
@@ -131,7 +131,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting posts for user {UserId}", userId);
-            return Result<List<Post>>.Failure("Failed to get user posts");
+            return Result.Failure<List<Post>>("Failed to get user posts");
         }
     }
 
@@ -152,7 +152,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting timeline feed for user {UserId}", userId);
-            return Result<List<Post>>.Failure("Failed to get timeline feed");
+            return Result.Failure<List<Post>>("Failed to get timeline feed");
         }
     }
 
@@ -172,7 +172,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting explore feed");
-            return Result<List<Post>>.Failure("Failed to get explore feed");
+            return Result.Failure<List<Post>>("Failed to get explore feed");
         }
     }
 
@@ -192,7 +192,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting trending posts");
-            return Result<List<Post>>.Failure("Failed to get trending posts");
+            return Result.Failure<List<Post>>("Failed to get trending posts");
         }
     }
 
@@ -210,7 +210,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error incrementing view count for post {PostId}", postId);
-            return Result<bool>.Failure("Failed to increment view count");
+            return Result.Failure<bool>("Failed to increment view count");
         }
     }
 
@@ -229,7 +229,7 @@ public class PostRepository : IPostRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Post not found");
+                return Result.Failure<bool>("Post not found");
             }
 
             return Result<bool>.Success(true);
@@ -237,7 +237,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating post stats for {PostId}", postId);
-            return Result<bool>.Failure("Failed to update post stats");
+            return Result.Failure<bool>("Failed to update post stats");
         }
     }
 
@@ -265,7 +265,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating comment for post {PostId}", comment.PostId);
-            return Result<Comment>.Failure("Failed to create comment");
+            return Result.Failure<Comment>("Failed to create comment");
         }
     }
 
@@ -278,7 +278,7 @@ public class PostRepository : IPostRepository
 
             if (comment == null)
             {
-                return Result<Comment>.Failure("Comment not found");
+                return Result.Failure<Comment>("Comment not found");
             }
 
             return Result<Comment>.Success(comment);
@@ -286,7 +286,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting comment {CommentId}", commentId);
-            return Result<Comment>.Failure("Failed to get comment");
+            return Result.Failure<Comment>("Failed to get comment");
         }
     }
 
@@ -303,7 +303,7 @@ public class PostRepository : IPostRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Comment not found");
+                return Result.Failure<bool>("Comment not found");
             }
 
             return Result<bool>.Success(true);
@@ -311,7 +311,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating comment {CommentId}", commentId);
-            return Result<bool>.Failure("Failed to update comment");
+            return Result.Failure<bool>("Failed to update comment");
         }
     }
 
@@ -324,7 +324,7 @@ public class PostRepository : IPostRepository
 
             if (comment == null || comment.UserId != userId)
             {
-                return Result<bool>.Failure("Comment not found or unauthorized");
+                return Result.Failure<bool>("Comment not found or unauthorized");
             }
 
             var update = Builders<Comment>.Update
@@ -352,7 +352,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting comment {CommentId}", commentId);
-            return Result<bool>.Failure("Failed to delete comment");
+            return Result.Failure<bool>("Failed to delete comment");
         }
     }
 
@@ -371,7 +371,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting comments for post {PostId}", postId);
-            return Result<List<Comment>>.Failure("Failed to get comments");
+            return Result.Failure<List<Comment>>("Failed to get comments");
         }
     }
 
@@ -390,7 +390,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting replies for comment {CommentId}", parentCommentId);
-            return Result<List<Comment>>.Failure("Failed to get replies");
+            return Result.Failure<List<Comment>>("Failed to get replies");
         }
     }
 
@@ -437,7 +437,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error adding reaction to {TargetType} {TargetId}", reaction.TargetType, reaction.TargetId);
-            return Result<Reaction>.Failure("Failed to add reaction");
+            return Result.Failure<Reaction>("Failed to add reaction");
         }
     }
 
@@ -453,7 +453,7 @@ public class PostRepository : IPostRepository
 
             if (result.DeletedCount == 0)
             {
-                return Result<bool>.Failure("Reaction not found");
+                return Result.Failure<bool>("Reaction not found");
             }
 
             // Update stats
@@ -475,7 +475,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing reaction from {TargetType} {TargetId}", targetType, targetId);
-            return Result<bool>.Failure("Failed to remove reaction");
+            return Result.Failure<bool>("Failed to remove reaction");
         }
     }
 
@@ -491,7 +491,7 @@ public class PostRepository : IPostRepository
 
             if (reaction == null)
             {
-                return Result<Reaction>.Failure("No reaction found");
+                return Result.Failure<Reaction>("No reaction found");
             }
 
             return Result<Reaction>.Success(reaction);
@@ -499,7 +499,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting user reaction for {TargetType} {TargetId}", targetType, targetId);
-            return Result<Reaction>.Failure("Failed to get reaction");
+            return Result.Failure<Reaction>("Failed to get reaction");
         }
     }
 
@@ -518,7 +518,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting reactions for {TargetType} {TargetId}", targetType, targetId);
-            return Result<List<Reaction>>.Failure("Failed to get reactions");
+            return Result.Failure<List<Reaction>>("Failed to get reactions");
         }
     }
 
@@ -538,7 +538,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting reaction counts for {TargetType} {TargetId}", targetType, targetId);
-            return Result<Dictionary<ReactionType, int>>.Failure("Failed to get reaction counts");
+            return Result.Failure<Dictionary<ReactionType, int>>("Failed to get reaction counts");
         }
     }
 
@@ -563,7 +563,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting posts by hashtag {Hashtag}", hashtag);
-            return Result<List<Post>>.Failure("Failed to get posts by hashtag");
+            return Result.Failure<List<Post>>("Failed to get posts by hashtag");
         }
     }
 
@@ -581,7 +581,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting trending hashtags");
-            return Result<List<Hashtag>>.Failure("Failed to get trending hashtags");
+            return Result.Failure<List<Hashtag>>("Failed to get trending hashtags");
         }
     }
 
@@ -610,7 +610,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating hashtag usage");
-            return Result<bool>.Failure("Failed to update hashtag usage");
+            return Result.Failure<bool>("Failed to update hashtag usage");
         }
     }
 
@@ -635,7 +635,7 @@ public class PostRepository : IPostRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error searching posts with term {SearchTerm}", searchTerm);
-            return Result<List<Post>>.Failure("Failed to search posts");
+            return Result.Failure<List<Post>>("Failed to search posts");
         }
     }
 }

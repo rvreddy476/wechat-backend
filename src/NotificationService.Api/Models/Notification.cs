@@ -113,7 +113,8 @@ public enum NotificationType
 
     // Achievements
     Milestone,
-    Badge
+    Badge,
+    GroupMessageMention
 }
 
 public enum EntityType

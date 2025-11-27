@@ -31,7 +31,8 @@ public class RedisService : IRedisService
         if (!value.HasValue)
             return default;
 
-        return JsonSerializer.Deserialize<T>(value!);
+        var jsonString = value.ToString();
+        return JsonSerializer.Deserialize<T>(jsonString);
     }
 
     public async Task<bool> SetAsync<T>(string key, T value, TimeSpan? expiry = null)

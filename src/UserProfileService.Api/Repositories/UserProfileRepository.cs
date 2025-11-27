@@ -34,7 +34,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating profile for user {UserId}", profile.UserId);
-            return Result<UserProfile>.Failure("Failed to create profile");
+            return Result.Failure<UserProfile>("Failed to create profile");
         }
     }
 
@@ -47,7 +47,7 @@ public class UserProfileRepository : IUserProfileRepository
 
             if (profile == null)
             {
-                return Result<UserProfile>.Failure(Errors.NotFound.User);
+                return Result.Failure<UserProfile>(Errors.NotFound.Entity("User"));
             }
 
             return Result<UserProfile>.Success(profile);
@@ -55,7 +55,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting profile for user {UserId}", userId);
-            return Result<UserProfile>.Failure("Failed to get profile");
+            return Result.Failure<UserProfile>("Failed to get profile");
         }
     }
 
@@ -68,7 +68,7 @@ public class UserProfileRepository : IUserProfileRepository
 
             if (profile == null)
             {
-                return Result<UserProfile>.Failure(Errors.NotFound.User);
+                return Result.Failure<UserProfile>(Errors.NotFound.Entity("User"));
             }
 
             return Result<UserProfile>.Success(profile);
@@ -76,7 +76,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting profile by username {Username}", username);
-            return Result<UserProfile>.Failure("Failed to get profile");
+            return Result.Failure<UserProfile>("Failed to get profile");
         }
     }
 
@@ -93,7 +93,7 @@ public class UserProfileRepository : IUserProfileRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure(Errors.NotFound.User);
+                return Result.Failure<bool>(Errors.NotFound.Entity("User"));
             }
 
             return Result<bool>.Success(true);
@@ -101,7 +101,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating profile for user {UserId}", userId);
-            return Result<bool>.Failure("Failed to update profile");
+            return Result.Failure<bool>("Failed to update profile");
         }
     }
 
@@ -121,7 +121,7 @@ public class UserProfileRepository : IUserProfileRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure(Errors.NotFound.User);
+                return Result.Failure<bool>(Errors.NotFound.Entity("User"));
             }
 
             return Result<bool>.Success(true);
@@ -129,7 +129,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting profile for user {UserId}", userId);
-            return Result<bool>.Failure("Failed to delete profile");
+            return Result.Failure<bool>("Failed to delete profile");
         }
     }
 
@@ -169,7 +169,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error searching profiles with term {SearchTerm}", searchTerm);
-            return Result<List<UserProfile>>.Failure("Failed to search profiles");
+            return Result.Failure<List<UserProfile>>("Failed to search profiles");
         }
     }
 
@@ -198,7 +198,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting suggested profiles for user {UserId}", userId);
-            return Result<List<UserProfile>>.Failure("Failed to get suggested profiles");
+            return Result.Failure<List<UserProfile>>("Failed to get suggested profiles");
         }
     }
 
@@ -217,7 +217,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting trending profiles");
-            return Result<List<UserProfile>>.Failure("Failed to get trending profiles");
+            return Result.Failure<List<UserProfile>>("Failed to get trending profiles");
         }
     }
 
@@ -236,7 +236,7 @@ public class UserProfileRepository : IUserProfileRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure(Errors.NotFound.User);
+                return Result.Failure<bool>(Errors.NotFound.Entity("User"));
             }
 
             return Result<bool>.Success(true);
@@ -244,7 +244,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating stats for user {UserId}", userId);
-            return Result<bool>.Failure("Failed to update stats");
+            return Result.Failure<bool>("Failed to update stats");
         }
     }
 
@@ -261,14 +261,14 @@ public class UserProfileRepository : IUserProfileRepository
 
             if (existing != null)
             {
-                return Result<Follow>.Failure("Already following this user");
+                return Result.Failure<Follow>("Already following this user");
             }
 
             // Check if followee profile is private
             var followeeProfile = await GetProfileByUserIdAsync(followeeId);
             if (!followeeProfile.IsSuccess)
             {
-                return Result<Follow>.Failure("User not found");
+                return Result.Failure<Follow>("User not found");
             }
 
             var follow = new Follow
@@ -292,7 +292,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating follow {FollowerId} -> {FolloweeId}", followerId, followeeId);
-            return Result<Follow>.Failure("Failed to follow user");
+            return Result.Failure<Follow>("Failed to follow user");
         }
     }
 
@@ -311,7 +311,7 @@ public class UserProfileRepository : IUserProfileRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Follow request not found");
+                return Result.Failure<bool>("Follow request not found");
             }
 
             // Update follower counts
@@ -323,7 +323,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error accepting follow request {FollowerId} -> {FolloweeId}", followerId, followeeId);
-            return Result<bool>.Failure("Failed to accept follow request");
+            return Result.Failure<bool>("Failed to accept follow request");
         }
     }
 
@@ -337,7 +337,7 @@ public class UserProfileRepository : IUserProfileRepository
 
             if (result.DeletedCount == 0)
             {
-                return Result<bool>.Failure("Follow request not found");
+                return Result.Failure<bool>("Follow request not found");
             }
 
             return Result<bool>.Success(true);
@@ -345,7 +345,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error rejecting follow request {FollowerId} -> {FolloweeId}", followerId, followeeId);
-            return Result<bool>.Failure("Failed to reject follow request");
+            return Result.Failure<bool>("Failed to reject follow request");
         }
     }
 
@@ -361,7 +361,7 @@ public class UserProfileRepository : IUserProfileRepository
 
             if (follow == null)
             {
-                return Result<bool>.Failure("Not following this user");
+                return Result.Failure<bool>("Not following this user");
             }
 
             var update = Builders<Follow>.Update
@@ -383,7 +383,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error unfollowing {FollowerId} -> {FolloweeId}", followerId, followeeId);
-            return Result<bool>.Failure("Failed to unfollow user");
+            return Result.Failure<bool>("Failed to unfollow user");
         }
     }
 
@@ -429,7 +429,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting followers for user {UserId}", userId);
-            return Result<List<UserProfile>>.Failure("Failed to get followers");
+            return Result.Failure<List<UserProfile>>("Failed to get followers");
         }
     }
 
@@ -455,7 +455,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting following for user {UserId}", userId);
-            return Result<List<UserProfile>>.Failure("Failed to get following");
+            return Result.Failure<List<UserProfile>>("Failed to get following");
         }
     }
 
@@ -481,7 +481,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting pending follow requests for user {UserId}", userId);
-            return Result<List<UserProfile>>.Failure("Failed to get pending requests");
+            return Result.Failure<List<UserProfile>>("Failed to get pending requests");
         }
     }
 
@@ -497,7 +497,7 @@ public class UserProfileRepository : IUserProfileRepository
 
             if (existing != null)
             {
-                return Result<bool>.Failure("User is already blocked");
+                return Result.Failure<bool>("User is already blocked");
             }
 
             var blockedUser = new BlockedUser
@@ -551,7 +551,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error blocking user {UserId} -> {BlockedUserId}", userId, blockedUserId);
-            return Result<bool>.Failure("Failed to block user");
+            return Result.Failure<bool>("Failed to block user");
         }
     }
 
@@ -566,7 +566,7 @@ public class UserProfileRepository : IUserProfileRepository
 
             if (result.DeletedCount == 0)
             {
-                return Result<bool>.Failure("User is not blocked");
+                return Result.Failure<bool>("User is not blocked");
             }
 
             return Result<bool>.Success(true);
@@ -574,7 +574,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error unblocking user {UserId} -> {BlockedUserId}", userId, blockedUserId);
-            return Result<bool>.Failure("Failed to unblock user");
+            return Result.Failure<bool>("Failed to unblock user");
         }
     }
 
@@ -614,7 +614,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting blocked users for user {UserId}", userId);
-            return Result<List<UserProfile>>.Failure("Failed to get blocked users");
+            return Result.Failure<List<UserProfile>>("Failed to get blocked users");
         }
     }
 
