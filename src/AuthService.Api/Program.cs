@@ -1,8 +1,7 @@
 using Serilog;
-using AuthService.Api.Repositories;
-using AuthService.Api.Services;
+using AuthService.Application;
+using AuthService.Infrastructure;
 using Shared.Infrastructure.Authentication;
-using Shared.Infrastructure.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,40 +17,12 @@ builder.Host.UseSerilog();
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new() { Title = "WeChat AuthService API", Version = "v1" });
-
-    // Add JWT authentication to Swagger
-    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-    {
-        Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
-        Name = "Authorization",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
-    });
-
-    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-    {
-        {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-            {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
-                {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
-});
+builder.Services.AddSwaggerGen();
 
 // Add CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddDefaultPolicy(policy =>
     {
         policy.AllowAnyOrigin()
               .AllowAnyMethod()
@@ -62,24 +33,13 @@ builder.Services.AddCors(options =>
 // Add JWT Authentication
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
-// Add Redis
-builder.Services.AddRedis(builder.Configuration);
+// Add Clean Architecture Layers
+builder.Services.AddApplication();       // MediatR, FluentValidation, Behaviors
+builder.Services.AddInfrastructure();    // Repositories, Services
 
-// Add repositories
-builder.Services.AddScoped<IAuthRepository, AuthRepository>();
-
-// Add services
-builder.Services.AddScoped<IVerificationService, VerificationService>();
-builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<ISmsService, SmsService>();
-
-// Add health checks
+// Add Health Checks
 builder.Services.AddHealthChecks()
-    .AddNpgSql(
-        builder.Configuration.GetConnectionString("PostgreSQL")!,
-        name: "postgresql",
-        tags: new[] { "db", "postgresql" }
-    );
+    .AddNpgSql(builder.Configuration.GetConnectionString("PostgreSQL")!);
 
 var app = builder.Build();
 
@@ -92,7 +52,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseSerilogRequestLogging();
 
-app.UseCors("AllowAll");
+app.UseHttpsRedirection();
+app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -101,21 +62,15 @@ app.MapControllers();
 
 app.MapHealthChecks("/health");
 
-app.MapGet("/", () => new
-{
-    service = "WeChat AuthService",
-    version = "1.0.0",
-    status = "running"
-});
+Log.Information("AuthService.Api starting up with Clean Architecture (CQRS)...");
 
 try
 {
-    Log.Information("Starting AuthService API");
     app.Run();
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "AuthService API terminated unexpectedly");
+    Log.Fatal(ex, "Application start-up failed");
 }
 finally
 {
