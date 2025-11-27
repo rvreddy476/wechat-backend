@@ -88,18 +88,18 @@ public class AuthRepository : IAuthRepository
         {
             var errorMessage = ex.MessageText ?? "Registration failed";
             _logger.LogWarning("Registration failed: {Error}", errorMessage);
-            return Result<UserDto>.Failure(errorMessage);
+            return Result.Failure<UserDto>(errorMessage);
         }
         catch (PostgresException ex) when (ex.SqlState == "23505") // Unique violation
         {
             if (ex.ConstraintName?.Contains("email") == true)
                 return Result.Failure<UserDto>(Errors.Authentication.DuplicateEmail);
             if (ex.ConstraintName?.Contains("username") == true)
-                return Result<UserDto>.Failure(Errors.Authentication.DuplicateUsername);
+                return Result.Failure<UserDto>(Errors.Authentication.DuplicateUsername);
             if (ex.ConstraintName?.Contains("phone") == true)
-                return Result<UserDto>.Failure("Phone number already registered");
+                return Result.Failure<UserDto>("Phone number already registered");
             if (ex.ConstraintName?.Contains("handler") == true)
-                return Result<UserDto>.Failure("Handler already taken");
+                return Result.Failure<UserDto>("Handler already taken");
 
             return Result.Failure<UserDto>("Registration failed: Duplicate entry");
         }

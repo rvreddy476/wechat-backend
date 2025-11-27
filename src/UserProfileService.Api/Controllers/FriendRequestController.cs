@@ -70,7 +70,7 @@ public class FriendRequestController : ControllerBase
             return BadRequest(ApiResponse<bool>.ErrorResponse(result.Error));
         }
 
-        return Ok(ApiResponse<bool>.SuccessResponse(true, "Friend request accepted"));
+        return Ok(ApiResponse<bool>.SuccessResponse(true));
     }
 
     /// <summary>
@@ -87,7 +87,7 @@ public class FriendRequestController : ControllerBase
             return BadRequest(ApiResponse<bool>.ErrorResponse(result.Error));
         }
 
-        return Ok(ApiResponse<bool>.SuccessResponse(true, "Friend request rejected"));
+        return Ok(ApiResponse<bool>.SuccessResponse(true));
     }
 
     /// <summary>
@@ -104,7 +104,7 @@ public class FriendRequestController : ControllerBase
             return BadRequest(ApiResponse<bool>.ErrorResponse(result.Error));
         }
 
-        return Ok(ApiResponse<bool>.SuccessResponse(true, "Friend request cancelled"));
+        return Ok(ApiResponse<bool>.SuccessResponse(true));
     }
 
     /// <summary>
@@ -319,7 +319,7 @@ public class FriendRequestController : ControllerBase
             return BadRequest(ApiResponse<bool>.ErrorResponse(result.Error));
         }
 
-        return Ok(ApiResponse<bool>.SuccessResponse(true, "Friend removed successfully"));
+        return Ok(ApiResponse<bool>.SuccessResponse(true));
     }
 
     /// <summary>

@@ -111,8 +111,7 @@ public class AuthController : ControllerBase
             username,  // Auto-generated username
             request.Email,
             request.PhoneNumber,
-            passwordHash,
-            request.Handler,
+            passwordHash,          
             request.Gender,
             request.DateOfBirth
         );
