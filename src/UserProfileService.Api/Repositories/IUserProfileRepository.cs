@@ -36,4 +36,19 @@ public interface IUserProfileRepository
     Task<Result<bool>> UnblockUserAsync(Guid userId, Guid blockedUserId);
     Task<bool> IsBlockedAsync(Guid userId, Guid targetUserId);
     Task<Result<List<UserProfile>>> GetBlockedUsersAsync(Guid userId, int page = 1, int pageSize = 20);
+
+    // Friend Request Management
+    Task<Result<FriendRequest>> SendFriendRequestAsync(Guid senderId, Guid receiverId, string? message = null);
+    Task<Result<bool>> AcceptFriendRequestAsync(Guid requestId, Guid receiverId);
+    Task<Result<bool>> RejectFriendRequestAsync(Guid requestId, Guid receiverId);
+    Task<Result<bool>> CancelFriendRequestAsync(Guid requestId, Guid senderId);
+    Task<Result<FriendRequest>> GetFriendRequestAsync(Guid requestId);
+    Task<Result<FriendRequest>> GetFriendRequestBetweenUsersAsync(Guid senderId, Guid receiverId);
+    Task<Result<List<FriendRequest>>> GetPendingFriendRequestsSentAsync(Guid userId, int page = 1, int pageSize = 20);
+    Task<Result<List<FriendRequest>>> GetPendingFriendRequestsReceivedAsync(Guid userId, int page = 1, int pageSize = 20);
+    Task<bool> AreFriendsAsync(Guid userId, Guid friendId);
+    Task<bool> HasPendingFriendRequestAsync(Guid senderId, Guid receiverId);
+    Task<Result<bool>> RemoveFriendAsync(Guid userId, Guid friendId);
+    Task<Result<List<UserProfile>>> GetFriendsAsync(Guid userId, int page = 1, int pageSize = 20);
+    Task<Result<int>> GetFriendsCountAsync(Guid userId);
 }

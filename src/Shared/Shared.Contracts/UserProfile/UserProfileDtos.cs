@@ -117,3 +117,46 @@ public record FollowerDto
     public bool Verified { get; init; }
     public DateTime FollowedAt { get; init; }
 }
+
+// Friend Request DTOs
+public record SendFriendRequestRequest
+{
+    public string? Message { get; init; }
+}
+
+public record FriendRequestDto
+{
+    public required string Id { get; init; }
+    public required Guid SenderId { get; init; }
+    public required string SenderUsername { get; init; }
+    public required string SenderDisplayName { get; init; }
+    public string? SenderAvatarUrl { get; init; }
+    public bool SenderIsVerified { get; init; }
+    public required Guid ReceiverId { get; init; }
+    public required string ReceiverUsername { get; init; }
+    public required string ReceiverDisplayName { get; init; }
+    public string? ReceiverAvatarUrl { get; init; }
+    public bool ReceiverIsVerified { get; init; }
+    public string Status { get; init; } = "Pending";
+    public string? Message { get; init; }
+    public DateTime CreatedAt { get; init; }
+    public DateTime? RespondedAt { get; init; }
+}
+
+public record FriendshipDto
+{
+    public required Guid UserId { get; init; }
+    public required string Username { get; init; }
+    public required string DisplayName { get; init; }
+    public string? AvatarUrl { get; init; }
+    public bool IsVerified { get; init; }
+    public string? Bio { get; init; }
+    public DateTime FriendshipDate { get; init; }
+}
+
+public record FriendRequestStatsDto
+{
+    public int PendingRequestsSent { get; init; }
+    public int PendingRequestsReceived { get; init; }
+    public int TotalFriends { get; init; }
+}

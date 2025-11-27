@@ -10,6 +10,8 @@ public class UserProfileRepository : IUserProfileRepository
     private readonly IMongoCollection<UserProfile> _profiles;
     private readonly IMongoCollection<Follow> _follows;
     private readonly IMongoCollection<BlockedUser> _blockedUsers;
+    private readonly IMongoCollection<FriendRequest> _friendRequests;
+    private readonly IMongoCollection<Friendship> _friendships;
     private readonly ILogger<UserProfileRepository> _logger;
 
     public UserProfileRepository(IMongoDatabase database, ILogger<UserProfileRepository> logger)
@@ -17,6 +19,8 @@ public class UserProfileRepository : IUserProfileRepository
         _profiles = database.GetCollection<UserProfile>("profiles");
         _follows = database.GetCollection<Follow>("follows");
         _blockedUsers = database.GetCollection<BlockedUser>("blockedUsers");
+        _friendRequests = database.GetCollection<FriendRequest>("friendRequests");
+        _friendships = database.GetCollection<Friendship>("friendships");
         _logger = logger;
     }
 
@@ -509,6 +513,39 @@ public class UserProfileRepository : IUserProfileRepository
             await UnfollowAsync(userId, blockedUserId);
             await UnfollowAsync(blockedUserId, userId);
 
+            // Remove friendship if exists
+            await RemoveFriendAsync(userId, blockedUserId);
+
+            // Cancel any pending friend requests
+            var pendingRequestsFromBlocker = await _friendRequests.Find(fr =>
+                fr.SenderId == userId &&
+                fr.ReceiverId == blockedUserId &&
+                fr.Status == FriendRequestStatus.Pending &&
+                !fr.IsDeleted
+            ).ToListAsync();
+
+            foreach (var request in pendingRequestsFromBlocker)
+            {
+                request.Status = FriendRequestStatus.Cancelled;
+                request.UpdatedAt = DateTime.UtcNow;
+                await _friendRequests.ReplaceOneAsync(fr => fr.Id == request.Id, request);
+            }
+
+            var pendingRequestsFromBlocked = await _friendRequests.Find(fr =>
+                fr.SenderId == blockedUserId &&
+                fr.ReceiverId == userId &&
+                fr.Status == FriendRequestStatus.Pending &&
+                !fr.IsDeleted
+            ).ToListAsync();
+
+            foreach (var request in pendingRequestsFromBlocked)
+            {
+                request.Status = FriendRequestStatus.Rejected;
+                request.RespondedAt = DateTime.UtcNow;
+                request.UpdatedAt = DateTime.UtcNow;
+                await _friendRequests.ReplaceOneAsync(fr => fr.Id == request.Id, request);
+            }
+
             return Result<bool>.Success(true);
         }
         catch (Exception ex)
@@ -578,6 +615,399 @@ public class UserProfileRepository : IUserProfileRepository
         {
             _logger.LogError(ex, "Error getting blocked users for user {UserId}", userId);
             return Result.Failure<List<UserProfile>>("Failed to get blocked users");
+        }
+    }
+
+    // Friend Request Management
+    public async Task<Result<FriendRequest>> SendFriendRequestAsync(Guid senderId, Guid receiverId, string? message = null)
+    {
+        try
+        {
+            // Cannot send friend request to yourself
+            if (senderId == receiverId)
+            {
+                return Result<FriendRequest>.Failure("Cannot send friend request to yourself");
+            }
+
+            // Check if blocked
+            if (await IsBlockedAsync(senderId, receiverId))
+            {
+                return Result<FriendRequest>.Failure("Cannot send friend request to this user");
+            }
+
+            // Check if already friends
+            if (await AreFriendsAsync(senderId, receiverId))
+            {
+                return Result<FriendRequest>.Failure("You are already friends with this user");
+            }
+
+            // Check if there's already a pending request
+            var existingRequest = await _friendRequests.Find(fr =>
+                ((fr.SenderId == senderId && fr.ReceiverId == receiverId) ||
+                 (fr.SenderId == receiverId && fr.ReceiverId == senderId)) &&
+                fr.Status == FriendRequestStatus.Pending &&
+                !fr.IsDeleted
+            ).FirstOrDefaultAsync();
+
+            if (existingRequest != null)
+            {
+                if (existingRequest.SenderId == senderId)
+                {
+                    return Result<FriendRequest>.Failure("Friend request already sent");
+                }
+                else
+                {
+                    return Result<FriendRequest>.Failure("This user has already sent you a friend request");
+                }
+            }
+
+            // Verify both users exist
+            var senderProfile = await GetProfileByUserIdAsync(senderId);
+            var receiverProfile = await GetProfileByUserIdAsync(receiverId);
+
+            if (!senderProfile.IsSuccess || !receiverProfile.IsSuccess)
+            {
+                return Result<FriendRequest>.Failure("User not found");
+            }
+
+            var friendRequest = new FriendRequest
+            {
+                SenderId = senderId,
+                ReceiverId = receiverId,
+                Message = message,
+                Status = FriendRequestStatus.Pending
+            };
+
+            await _friendRequests.InsertOneAsync(friendRequest);
+
+            return Result<FriendRequest>.Success(friendRequest);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending friend request from {SenderId} to {ReceiverId}", senderId, receiverId);
+            return Result<FriendRequest>.Failure("Failed to send friend request");
+        }
+    }
+
+    public async Task<Result<bool>> AcceptFriendRequestAsync(Guid requestId, Guid receiverId)
+    {
+        try
+        {
+            var requestObjectId = MongoDB.Bson.ObjectId.Parse(requestId.ToString("N").Substring(0, 24));
+            var requestIdString = requestObjectId.ToString();
+
+            var friendRequest = await _friendRequests.Find(fr =>
+                fr.Id == requestIdString &&
+                fr.ReceiverId == receiverId &&
+                fr.Status == FriendRequestStatus.Pending &&
+                !fr.IsDeleted
+            ).FirstOrDefaultAsync();
+
+            if (friendRequest == null)
+            {
+                return Result<bool>.Failure("Friend request not found");
+            }
+
+            // Update friend request status
+            friendRequest.Status = FriendRequestStatus.Accepted;
+            friendRequest.RespondedAt = DateTime.UtcNow;
+            friendRequest.UpdatedAt = DateTime.UtcNow;
+
+            await _friendRequests.ReplaceOneAsync(fr => fr.Id == requestIdString, friendRequest);
+
+            // Create mutual friendships
+            var friendship1 = new Friendship
+            {
+                UserId = friendRequest.SenderId,
+                FriendId = friendRequest.ReceiverId,
+                FriendshipDate = DateTime.UtcNow
+            };
+
+            var friendship2 = new Friendship
+            {
+                UserId = friendRequest.ReceiverId,
+                FriendId = friendRequest.SenderId,
+                FriendshipDate = DateTime.UtcNow
+            };
+
+            await _friendships.InsertOneAsync(friendship1);
+            await _friendships.InsertOneAsync(friendship2);
+
+            return Result<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error accepting friend request {RequestId}", requestId);
+            return Result<bool>.Failure("Failed to accept friend request");
+        }
+    }
+
+    public async Task<Result<bool>> RejectFriendRequestAsync(Guid requestId, Guid receiverId)
+    {
+        try
+        {
+            var requestObjectId = MongoDB.Bson.ObjectId.Parse(requestId.ToString("N").Substring(0, 24));
+            var requestIdString = requestObjectId.ToString();
+
+            var friendRequest = await _friendRequests.Find(fr =>
+                fr.Id == requestIdString &&
+                fr.ReceiverId == receiverId &&
+                fr.Status == FriendRequestStatus.Pending &&
+                !fr.IsDeleted
+            ).FirstOrDefaultAsync();
+
+            if (friendRequest == null)
+            {
+                return Result<bool>.Failure("Friend request not found");
+            }
+
+            friendRequest.Status = FriendRequestStatus.Rejected;
+            friendRequest.RespondedAt = DateTime.UtcNow;
+            friendRequest.UpdatedAt = DateTime.UtcNow;
+
+            await _friendRequests.ReplaceOneAsync(fr => fr.Id == requestIdString, friendRequest);
+
+            return Result<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error rejecting friend request {RequestId}", requestId);
+            return Result<bool>.Failure("Failed to reject friend request");
+        }
+    }
+
+    public async Task<Result<bool>> CancelFriendRequestAsync(Guid requestId, Guid senderId)
+    {
+        try
+        {
+            var requestObjectId = MongoDB.Bson.ObjectId.Parse(requestId.ToString("N").Substring(0, 24));
+            var requestIdString = requestObjectId.ToString();
+
+            var friendRequest = await _friendRequests.Find(fr =>
+                fr.Id == requestIdString &&
+                fr.SenderId == senderId &&
+                fr.Status == FriendRequestStatus.Pending &&
+                !fr.IsDeleted
+            ).FirstOrDefaultAsync();
+
+            if (friendRequest == null)
+            {
+                return Result<bool>.Failure("Friend request not found");
+            }
+
+            friendRequest.Status = FriendRequestStatus.Cancelled;
+            friendRequest.UpdatedAt = DateTime.UtcNow;
+
+            await _friendRequests.ReplaceOneAsync(fr => fr.Id == requestIdString, friendRequest);
+
+            return Result<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cancelling friend request {RequestId}", requestId);
+            return Result<bool>.Failure("Failed to cancel friend request");
+        }
+    }
+
+    public async Task<Result<FriendRequest>> GetFriendRequestAsync(Guid requestId)
+    {
+        try
+        {
+            var requestObjectId = MongoDB.Bson.ObjectId.Parse(requestId.ToString("N").Substring(0, 24));
+            var requestIdString = requestObjectId.ToString();
+
+            var friendRequest = await _friendRequests.Find(fr => fr.Id == requestIdString && !fr.IsDeleted)
+                .FirstOrDefaultAsync();
+
+            if (friendRequest == null)
+            {
+                return Result<FriendRequest>.Failure("Friend request not found");
+            }
+
+            return Result<FriendRequest>.Success(friendRequest);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting friend request {RequestId}", requestId);
+            return Result<FriendRequest>.Failure("Failed to get friend request");
+        }
+    }
+
+    public async Task<Result<FriendRequest>> GetFriendRequestBetweenUsersAsync(Guid senderId, Guid receiverId)
+    {
+        try
+        {
+            var friendRequest = await _friendRequests.Find(fr =>
+                fr.SenderId == senderId &&
+                fr.ReceiverId == receiverId &&
+                fr.Status == FriendRequestStatus.Pending &&
+                !fr.IsDeleted
+            ).FirstOrDefaultAsync();
+
+            if (friendRequest == null)
+            {
+                return Result<FriendRequest>.Failure("Friend request not found");
+            }
+
+            return Result<FriendRequest>.Success(friendRequest);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting friend request between {SenderId} and {ReceiverId}", senderId, receiverId);
+            return Result<FriendRequest>.Failure("Failed to get friend request");
+        }
+    }
+
+    public async Task<Result<List<FriendRequest>>> GetPendingFriendRequestsSentAsync(Guid userId, int page = 1, int pageSize = 20)
+    {
+        try
+        {
+            var requests = await _friendRequests.Find(fr =>
+                    fr.SenderId == userId &&
+                    fr.Status == FriendRequestStatus.Pending &&
+                    !fr.IsDeleted
+                )
+                .Skip((page - 1) * pageSize)
+                .Limit(pageSize)
+                .SortByDescending(fr => fr.CreatedAt)
+                .ToListAsync();
+
+            return Result<List<FriendRequest>>.Success(requests);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting pending friend requests sent by {UserId}", userId);
+            return Result<List<FriendRequest>>.Failure("Failed to get pending friend requests");
+        }
+    }
+
+    public async Task<Result<List<FriendRequest>>> GetPendingFriendRequestsReceivedAsync(Guid userId, int page = 1, int pageSize = 20)
+    {
+        try
+        {
+            var requests = await _friendRequests.Find(fr =>
+                    fr.ReceiverId == userId &&
+                    fr.Status == FriendRequestStatus.Pending &&
+                    !fr.IsDeleted
+                )
+                .Skip((page - 1) * pageSize)
+                .Limit(pageSize)
+                .SortByDescending(fr => fr.CreatedAt)
+                .ToListAsync();
+
+            return Result<List<FriendRequest>>.Success(requests);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting pending friend requests received by {UserId}", userId);
+            return Result<List<FriendRequest>>.Failure("Failed to get pending friend requests");
+        }
+    }
+
+    public async Task<bool> AreFriendsAsync(Guid userId, Guid friendId)
+    {
+        try
+        {
+            var count = await _friendships.CountDocumentsAsync(f =>
+                f.UserId == userId &&
+                f.FriendId == friendId &&
+                !f.IsDeleted
+            );
+
+            return count > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking if friends {UserId} <-> {FriendId}", userId, friendId);
+            return false;
+        }
+    }
+
+    public async Task<bool> HasPendingFriendRequestAsync(Guid senderId, Guid receiverId)
+    {
+        try
+        {
+            var count = await _friendRequests.CountDocumentsAsync(fr =>
+                fr.SenderId == senderId &&
+                fr.ReceiverId == receiverId &&
+                fr.Status == FriendRequestStatus.Pending &&
+                !fr.IsDeleted
+            );
+
+            return count > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking pending friend request {SenderId} -> {ReceiverId}", senderId, receiverId);
+            return false;
+        }
+    }
+
+    public async Task<Result<bool>> RemoveFriendAsync(Guid userId, Guid friendId)
+    {
+        try
+        {
+            // Delete both friendship records
+            await _friendships.DeleteOneAsync(f =>
+                f.UserId == userId &&
+                f.FriendId == friendId
+            );
+
+            await _friendships.DeleteOneAsync(f =>
+                f.UserId == friendId &&
+                f.FriendId == userId
+            );
+
+            return Result<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing friend {UserId} <-> {FriendId}", userId, friendId);
+            return Result<bool>.Failure("Failed to remove friend");
+        }
+    }
+
+    public async Task<Result<List<UserProfile>>> GetFriendsAsync(Guid userId, int page = 1, int pageSize = 20)
+    {
+        try
+        {
+            var friendIds = await _friendships.Find(f =>
+                    f.UserId == userId &&
+                    !f.IsDeleted
+                )
+                .Skip((page - 1) * pageSize)
+                .Limit(pageSize)
+                .SortByDescending(f => f.FriendshipDate)
+                .Project(f => f.FriendId)
+                .ToListAsync();
+
+            var profiles = await _profiles.Find(p => friendIds.Contains(p.UserId) && !p.IsDeleted)
+                .ToListAsync();
+
+            return Result<List<UserProfile>>.Success(profiles);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting friends for user {UserId}", userId);
+            return Result<List<UserProfile>>.Failure("Failed to get friends");
+        }
+    }
+
+    public async Task<Result<int>> GetFriendsCountAsync(Guid userId)
+    {
+        try
+        {
+            var count = await _friendships.CountDocumentsAsync(f =>
+                f.UserId == userId &&
+                !f.IsDeleted
+            );
+
+            return Result<int>.Success((int)count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting friends count for user {UserId}", userId);
+            return Result<int>.Failure("Failed to get friends count");
         }
     }
 }
