@@ -59,7 +59,7 @@ public class AuthRepository : IAuthRepository
 
             if (result == null)
             {
-                return Result<UserDto>.Failure("Registration failed");
+                return Result.Failure<UserDto>("Registration failed");
             }
 
             var userDto = new UserDto
@@ -93,7 +93,7 @@ public class AuthRepository : IAuthRepository
         catch (PostgresException ex) when (ex.SqlState == "23505") // Unique violation
         {
             if (ex.ConstraintName?.Contains("email") == true)
-                return Result<UserDto>.Failure(Errors.Authentication.DuplicateEmail);
+                return Result.Failure<UserDto>(Errors.Authentication.DuplicateEmail);
             if (ex.ConstraintName?.Contains("username") == true)
                 return Result<UserDto>.Failure(Errors.Authentication.DuplicateUsername);
             if (ex.ConstraintName?.Contains("phone") == true)
@@ -101,12 +101,12 @@ public class AuthRepository : IAuthRepository
             if (ex.ConstraintName?.Contains("handler") == true)
                 return Result<UserDto>.Failure("Handler already taken");
 
-            return Result<UserDto>.Failure("Registration failed: Duplicate entry");
+            return Result.Failure<UserDto>("Registration failed: Duplicate entry");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error registering user {Email}", email);
-            return Result<UserDto>.Failure("An error occurred during registration");
+            return Result.Failure<UserDto>("An error occurred during registration");
         }
     }
 
@@ -130,7 +130,7 @@ public class AuthRepository : IAuthRepository
 
             if (result == null)
             {
-                return Result<UserAuthDto>.Failure(Errors.Authentication.InvalidCredentials);
+                return Result.Failure<UserAuthDto>(Errors.Authentication.InvalidCredentials);
             }
 
             // Get user roles
@@ -158,7 +158,7 @@ public class AuthRepository : IAuthRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error authenticating user {EmailOrUsername}", emailOrUsername);
-            return Result<UserAuthDto>.Failure(Errors.Authentication.InvalidCredentials);
+            return Result.Failure<UserAuthDto>(Errors.Authentication.InvalidCredentials);
         }
     }
 
@@ -176,7 +176,7 @@ public class AuthRepository : IAuthRepository
 
             if (result == null)
             {
-                return Result<UserDto>.Failure(Errors.NotFound.User);
+                return Result.Failure<UserDto>(Errors.NotFound.User);
             }
 
             // Get user roles
@@ -208,7 +208,7 @@ public class AuthRepository : IAuthRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting user {UserId}", userId);
-            return Result<UserDto>.Failure("Failed to retrieve user");
+            return Result.Failure<UserDto>("Failed to retrieve user");
         }
     }
 
@@ -237,12 +237,12 @@ public class AuthRepository : IAuthRepository
         }
         catch (PostgresException ex) when (ex.SqlState == "23505")
         {
-            return Result<bool>.Failure("Username or phone number already exists");
+            return Result.Failure<bool>("Username or phone number already exists");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating user profile {UserId}", userId);
-            return Result<bool>.Failure("Failed to update profile");
+            return Result.Failure<bool>("Failed to update profile");
         }
     }
 
@@ -269,12 +269,12 @@ public class AuthRepository : IAuthRepository
         }
         catch (PostgresException ex) when (ex.Message.Contains("Invalid current password"))
         {
-            return Result<bool>.Failure(Errors.Authentication.InvalidPassword);
+            return Result.Failure<bool>(Errors.Authentication.InvalidPassword);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error changing password for user {UserId}", userId);
-            return Result<bool>.Failure("Failed to change password");
+            return Result.Failure<bool>("Failed to change password");
         }
     }
 
@@ -295,7 +295,7 @@ public class AuthRepository : IAuthRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting user {UserId}", userId);
-            return Result<bool>.Failure("Failed to delete user");
+            return Result.Failure<bool>("Failed to delete user");
         }
     }
 
@@ -325,7 +325,7 @@ public class AuthRepository : IAuthRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating refresh token for user {UserId}", userId);
-            return Result<Guid>.Failure("Failed to create refresh token");
+            return Result.Failure<Guid>("Failed to create refresh token");
         }
     }
 
@@ -343,7 +343,7 @@ public class AuthRepository : IAuthRepository
 
             if (result == null)
             {
-                return Result<RefreshTokenDto>.Failure(Errors.Authentication.InvalidToken);
+                return Result.Failure<RefreshTokenDto>(Errors.Authentication.InvalidToken);
             }
 
             var tokenDto = new RefreshTokenDto
@@ -361,7 +361,7 @@ public class AuthRepository : IAuthRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validating refresh token");
-            return Result<RefreshTokenDto>.Failure(Errors.Authentication.InvalidToken);
+            return Result.Failure<RefreshTokenDto>(Errors.Authentication.InvalidToken);
         }
     }
 
@@ -382,7 +382,7 @@ public class AuthRepository : IAuthRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error revoking refresh token {TokenId}", tokenId);
-            return Result<bool>.Failure("Failed to revoke token");
+            return Result.Failure<bool>("Failed to revoke token");
         }
     }
 
@@ -403,7 +403,7 @@ public class AuthRepository : IAuthRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error revoking all tokens for user {UserId}", userId);
-            return Result<bool>.Failure("Failed to revoke tokens");
+            return Result.Failure<bool>("Failed to revoke tokens");
         }
     }
 
@@ -430,7 +430,7 @@ public class AuthRepository : IAuthRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating email verification token for user {UserId}", userId);
-            return Result<Guid>.Failure("Failed to create verification token");
+            return Result.Failure<Guid>("Failed to create verification token");
         }
     }
 
@@ -449,7 +449,7 @@ public class AuthRepository : IAuthRepository
 
             if (result == null)
             {
-                return Result<EmailVerificationTokenDto>.Failure(Errors.Authentication.InvalidToken);
+                return Result.Failure<EmailVerificationTokenDto>(Errors.Authentication.InvalidToken);
             }
 
             return Result<EmailVerificationTokenDto>.Success(result);
@@ -457,7 +457,7 @@ public class AuthRepository : IAuthRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting email verification token");
-            return Result<EmailVerificationTokenDto>.Failure("Failed to validate token");
+            return Result.Failure<EmailVerificationTokenDto>("Failed to validate token");
         }
     }
 
@@ -477,7 +477,7 @@ public class AuthRepository : IAuthRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error marking email as verified for user {UserId}", userId);
-            return Result<bool>.Failure("Failed to verify email");
+            return Result.Failure<bool>("Failed to verify email");
         }
     }
 
@@ -504,7 +504,7 @@ public class AuthRepository : IAuthRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating password reset token for user {UserId}", userId);
-            return Result<Guid>.Failure("Failed to create reset token");
+            return Result.Failure<Guid>("Failed to create reset token");
         }
     }
 
@@ -523,7 +523,7 @@ public class AuthRepository : IAuthRepository
 
             if (result == null)
             {
-                return Result<PasswordResetTokenDto>.Failure(Errors.Authentication.InvalidToken);
+                return Result.Failure<PasswordResetTokenDto>(Errors.Authentication.InvalidToken);
             }
 
             return Result<PasswordResetTokenDto>.Success(result);
@@ -531,7 +531,7 @@ public class AuthRepository : IAuthRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting password reset token");
-            return Result<PasswordResetTokenDto>.Failure("Failed to validate token");
+            return Result.Failure<PasswordResetTokenDto>("Failed to validate token");
         }
     }
 
@@ -559,7 +559,7 @@ public class AuthRepository : IAuthRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error resetting password for user {UserId}", userId);
-            return Result<bool>.Failure("Failed to reset password");
+            return Result.Failure<bool>("Failed to reset password");
         }
     }
 

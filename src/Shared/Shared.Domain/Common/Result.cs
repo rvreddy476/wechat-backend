@@ -54,6 +54,9 @@ public static class Errors
         public static string AccountLocked => "Account is locked due to multiple failed login attempts";
         public static string EmailNotVerified => "Email address is not verified";
         public static string InvalidToken => "Invalid or expired token";
+        public static string DuplicateEmail => "Email already registered";
+        public static string DuplicateUsername => "Username already taken";
+        public static string InvalidPassword => "Invalid current password";
     }
 
     public static class Validation
@@ -68,6 +71,7 @@ public static class Errors
     {
         public static string Entity(string entityName, string id) => $"{entityName} with ID '{id}' not found";
         public static string Entity(string entityName) => $"{entityName} not found";
+        public static string User => "User not found";
     }
 
     public static class Conflict

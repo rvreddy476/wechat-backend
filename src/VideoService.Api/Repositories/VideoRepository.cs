@@ -25,7 +25,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating video for user {UserId}", video.UserId);
-            return Result<Video>.Failure("Failed to create video");
+            return Result.Failure<Video>("Failed to create video");
         }
     }
 
@@ -38,7 +38,7 @@ public class VideoRepository : IVideoRepository
 
             if (video == null)
             {
-                return Result<Video>.Failure("Video not found");
+                return Result.Failure<Video>("Video not found");
             }
 
             return Result<Video>.Success(video);
@@ -46,7 +46,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting video {VideoId}", videoId);
-            return Result<Video>.Failure("Failed to get video");
+            return Result.Failure<Video>("Failed to get video");
         }
     }
 
@@ -63,7 +63,7 @@ public class VideoRepository : IVideoRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Video not found");
+                return Result.Failure<bool>("Video not found");
             }
 
             return Result<bool>.Success(true);
@@ -71,7 +71,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating video {VideoId}", videoId);
-            return Result<bool>.Failure("Failed to update video");
+            return Result.Failure<bool>("Failed to update video");
         }
     }
 
@@ -91,7 +91,7 @@ public class VideoRepository : IVideoRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Video not found or unauthorized");
+                return Result.Failure<bool>("Video not found or unauthorized");
             }
 
             return Result<bool>.Success(true);
@@ -99,7 +99,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting video {VideoId}", videoId);
-            return Result<bool>.Failure("Failed to delete video");
+            return Result.Failure<bool>("Failed to delete video");
         }
     }
 
@@ -130,7 +130,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting videos for user {UserId}", userId);
-            return Result<List<Video>>.Failure("Failed to get user videos");
+            return Result.Failure<List<Video>>("Failed to get user videos");
         }
     }
 
@@ -160,7 +160,7 @@ public class VideoRepository : IVideoRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Video not found");
+                return Result.Failure<bool>("Video not found");
             }
 
             return Result<bool>.Success(true);
@@ -168,7 +168,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating processing status for video {VideoId}", videoId);
-            return Result<bool>.Failure("Failed to update processing status");
+            return Result.Failure<bool>("Failed to update processing status");
         }
     }
 
@@ -188,7 +188,7 @@ public class VideoRepository : IVideoRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Video not found");
+                return Result.Failure<bool>("Video not found");
             }
 
             return Result<bool>.Success(true);
@@ -196,7 +196,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating streaming URL for video {VideoId}", videoId);
-            return Result<bool>.Failure("Failed to update streaming URL");
+            return Result.Failure<bool>("Failed to update streaming URL");
         }
     }
 
@@ -216,7 +216,7 @@ public class VideoRepository : IVideoRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Video not found");
+                return Result.Failure<bool>("Video not found");
             }
 
             return Result<bool>.Success(true);
@@ -224,7 +224,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating thumbnails for video {VideoId}", videoId);
-            return Result<bool>.Failure("Failed to update thumbnails");
+            return Result.Failure<bool>("Failed to update thumbnails");
         }
     }
 
@@ -258,7 +258,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting trending videos");
-            return Result<List<Video>>.Failure("Failed to get trending videos");
+            return Result.Failure<List<Video>>("Failed to get trending videos");
         }
     }
 
@@ -289,7 +289,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting featured videos");
-            return Result<List<Video>>.Failure("Failed to get featured videos");
+            return Result.Failure<List<Video>>("Failed to get featured videos");
         }
     }
 
@@ -313,7 +313,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting videos by category {Category}", category);
-            return Result<List<Video>>.Failure("Failed to get videos by category");
+            return Result.Failure<List<Video>>("Failed to get videos by category");
         }
     }
 
@@ -337,7 +337,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting videos by tag {Tag}", tag);
-            return Result<List<Video>>.Failure("Failed to get videos by tag");
+            return Result.Failure<List<Video>>("Failed to get videos by tag");
         }
     }
 
@@ -363,7 +363,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting videos by hashtag {Hashtag}", hashtag);
-            return Result<List<Video>>.Failure("Failed to get videos by hashtag");
+            return Result.Failure<List<Video>>("Failed to get videos by hashtag");
         }
     }
 
@@ -396,7 +396,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting recommended videos for user {UserId}", userId);
-            return Result<List<Video>>.Failure("Failed to get recommended videos");
+            return Result.Failure<List<Video>>("Failed to get recommended videos");
         }
     }
 
@@ -419,7 +419,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting subscription feed");
-            return Result<List<Video>>.Failure("Failed to get subscription feed");
+            return Result.Failure<List<Video>>("Failed to get subscription feed");
         }
     }
 
@@ -451,7 +451,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting explore feed");
-            return Result<List<Video>>.Failure("Failed to get explore feed");
+            return Result.Failure<List<Video>>("Failed to get explore feed");
         }
     }
 
@@ -475,7 +475,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error incrementing view count for video {VideoId}", videoId);
-            return Result<bool>.Failure("Failed to increment view count");
+            return Result.Failure<bool>("Failed to increment view count");
         }
     }
 
@@ -508,7 +508,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating watch time for video {VideoId}", videoId);
-            return Result<bool>.Failure("Failed to update watch time");
+            return Result.Failure<bool>("Failed to update watch time");
         }
     }
 
@@ -527,7 +527,7 @@ public class VideoRepository : IVideoRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Video not found");
+                return Result.Failure<bool>("Video not found");
             }
 
             return Result<bool>.Success(true);
@@ -535,7 +535,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating stats for video {VideoId}", videoId);
-            return Result<bool>.Failure("Failed to update stats");
+            return Result.Failure<bool>("Failed to update stats");
         }
     }
 
@@ -570,7 +570,7 @@ public class VideoRepository : IVideoRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error searching videos with term {SearchTerm}", searchTerm);
-            return Result<List<Video>>.Failure("Failed to search videos");
+            return Result.Failure<List<Video>>("Failed to search videos");
         }
     }
 }

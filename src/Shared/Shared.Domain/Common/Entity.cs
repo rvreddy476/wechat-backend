@@ -5,8 +5,8 @@ namespace Shared.Domain.Common;
 /// </summary>
 public interface IEntity
 {
-    DateTime CreatedAt { get; }
-    DateTime UpdatedAt { get; }
+    DateTime CreatedAt { get; set; }
+    DateTime UpdatedAt { get; set; }
 }
 
 /// <summary>

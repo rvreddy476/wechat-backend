@@ -6,6 +6,7 @@ using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Metadata.Profiles.Exif;
+using System.Linq;
 
 namespace MediaService.Api.Services;
 
@@ -30,7 +31,7 @@ public class MediaProcessingService : IMediaProcessingService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting image dimensions");
-            return Result<(int Width, int Height)>.Failure($"Failed to get image dimensions: {ex.Message}");
+            return Result.Failure<(int Width, int Height)>($"Failed to get image dimensions: {ex.Message}");
         }
     }
 
@@ -51,12 +52,12 @@ public class MediaProcessingService : IMediaProcessingService
             outputStream.Position = 0;
 
             _logger.LogInformation("Optimized image with quality {Quality}", quality);
-            return Result<Stream>.Success(outputStream);
+            return Result.Success<Stream>(outputStream);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error optimizing image");
-            return Result<Stream>.Failure($"Failed to optimize image: {ex.Message}");
+            return Result.Failure<Stream>($"Failed to optimize image: {ex.Message}");
         }
     }
 
@@ -90,12 +91,12 @@ public class MediaProcessingService : IMediaProcessingService
             outputStream.Position = 0;
 
             _logger.LogInformation("Generated thumbnail {Width}x{Height}", width, height);
-            return Result<Stream>.Success(outputStream);
+            return Result.Success<Stream>(outputStream);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error generating thumbnail");
-            return Result<Stream>.Failure($"Failed to generate thumbnail: {ex.Message}");
+            return Result.Failure<Stream>($"Failed to generate thumbnail: {ex.Message}");
         }
     }
 
@@ -117,12 +118,12 @@ public class MediaProcessingService : IMediaProcessingService
             outputStream.Position = 0;
 
             _logger.LogInformation("Resized image to {Width}x{Height}", width, height);
-            return Result<Stream>.Success(outputStream);
+            return Result.Success<Stream>(outputStream);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error resizing image");
-            return Result<Stream>.Failure($"Failed to resize image: {ex.Message}");
+            return Result.Failure<Stream>($"Failed to resize image: {ex.Message}");
         }
     }
 
@@ -161,25 +162,29 @@ public class MediaProcessingService : IMediaProcessingService
                     }
 
                     // Try to extract GPS location
-                    var lat = image.Metadata.ExifProfile.GetValue(ExifTag.GPSLatitude);
-                    var lon = image.Metadata.ExifProfile.GetValue(ExifTag.GPSLongitude);
-
-                    if (lat != null && lon != null)
+                    var exifValues = image.Metadata.ExifProfile?.Values;
+                    if (exifValues != null)
                     {
-                        try
-                        {
-                            var latValue = ToDecimalDegrees(lat.Value);
-                            var lonValue = ToDecimalDegrees(lon.Value);
+                        var latEntry = exifValues.FirstOrDefault(v => v.Tag == ExifTag.GPSLatitude);
+                        var lonEntry = exifValues.FirstOrDefault(v => v.Tag == ExifTag.GPSLongitude);
 
-                            metadata.Location = new MediaLocation
-                            {
-                                Latitude = latValue,
-                                Longitude = lonValue
-                            };
-                        }
-                        catch (Exception ex)
+                        if (latEntry?.GetValue() is Rational[] latCoords && lonEntry?.GetValue() is Rational[] lonCoords)
                         {
-                            _logger.LogWarning(ex, "Failed to parse GPS coordinates");
+                            try
+                            {
+                                var latValue = ToDecimalDegrees(latCoords);
+                                var lonValue = ToDecimalDegrees(lonCoords);
+
+                                metadata.Location = new MediaLocation
+                                {
+                                    Latitude = latValue,
+                                    Longitude = lonValue
+                                };
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "Failed to parse GPS coordinates");
+                            }
                         }
                     }
                 }
@@ -191,12 +196,12 @@ public class MediaProcessingService : IMediaProcessingService
                 _logger.LogInformation("Video/Audio metadata extraction not yet implemented");
             }
 
-            return Result<MediaMetadata>.Success(metadata);
+            return Result.Success<MediaMetadata>(metadata);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error extracting media metadata");
-            return Result<MediaMetadata>.Failure($"Failed to extract metadata: {ex.Message}");
+            return Result.Failure<MediaMetadata>($"Failed to extract metadata: {ex.Message}");
         }
     }
 

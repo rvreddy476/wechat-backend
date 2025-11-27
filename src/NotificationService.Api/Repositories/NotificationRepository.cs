@@ -35,7 +35,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating notification for user {UserId}", notification.RecipientId);
-            return Result<Notification>.Failure($"Failed to create notification: {ex.Message}");
+            return Result.Failure<Notification>($"Failed to create notification: {ex.Message}");
         }
     }
 
@@ -49,7 +49,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
 
             if (notification == null)
             {
-                return Result<Notification>.Failure("Notification not found");
+                return Result.Failure<Notification>("Notification not found");
             }
 
             return Result<Notification>.Success(notification);
@@ -57,7 +57,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting notification {NotificationId}", notificationId);
-            return Result<Notification>.Failure($"Failed to get notification: {ex.Message}");
+            return Result.Failure<Notification>($"Failed to get notification: {ex.Message}");
         }
     }
 
@@ -101,7 +101,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting notifications for user {UserId}", userId);
-            return Result<List<Notification>>.Failure($"Failed to get notifications: {ex.Message}");
+            return Result.Failure<List<Notification>>($"Failed to get notifications: {ex.Message}");
         }
     }
 
@@ -125,7 +125,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting unread count for user {UserId}", userId);
-            return Result<int>.Failure($"Failed to get unread count: {ex.Message}");
+            return Result.Failure<int>($"Failed to get unread count: {ex.Message}");
         }
     }
 
@@ -145,7 +145,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Notification not found");
+                return Result.Failure<bool>("Notification not found");
             }
 
             return Result<bool>.Success(true);
@@ -153,7 +153,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error marking notification {NotificationId} as read", notificationId);
-            return Result<bool>.Failure($"Failed to mark notification as read: {ex.Message}");
+            return Result.Failure<bool>($"Failed to mark notification as read: {ex.Message}");
         }
     }
 
@@ -175,7 +175,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error marking all notifications as read for user {UserId}", userId);
-            return Result<bool>.Failure($"Failed to mark all notifications as read: {ex.Message}");
+            return Result.Failure<bool>($"Failed to mark all notifications as read: {ex.Message}");
         }
     }
 
@@ -190,7 +190,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
 
             if (result.DeletedCount == 0)
             {
-                return Result<bool>.Failure("Notification not found");
+                return Result.Failure<bool>("Notification not found");
             }
 
             return Result<bool>.Success(true);
@@ -198,7 +198,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting notification {NotificationId}", notificationId);
-            return Result<bool>.Failure($"Failed to delete notification: {ex.Message}");
+            return Result.Failure<bool>($"Failed to delete notification: {ex.Message}");
         }
     }
 
@@ -213,7 +213,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting all notifications for user {UserId}", userId);
-            return Result<bool>.Failure($"Failed to delete all notifications: {ex.Message}");
+            return Result.Failure<bool>($"Failed to delete all notifications: {ex.Message}");
         }
     }
 
@@ -230,7 +230,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Notification not found");
+                return Result.Failure<bool>("Notification not found");
             }
 
             return Result<bool>.Success(true);
@@ -238,7 +238,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating delivery status for notification {NotificationId}", notificationId);
-            return Result<bool>.Failure($"Failed to update delivery status: {ex.Message}");
+            return Result.Failure<bool>($"Failed to update delivery status: {ex.Message}");
         }
     }
 
@@ -268,7 +268,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting preferences for user {UserId}", userId);
-            return Result<NotificationPreferences>.Failure($"Failed to get preferences: {ex.Message}");
+            return Result.Failure<NotificationPreferences>($"Failed to get preferences: {ex.Message}");
         }
     }
 
@@ -289,7 +289,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating preferences for user {UserId}", preferences.UserId);
-            return Result<NotificationPreferences>.Failure($"Failed to update preferences: {ex.Message}");
+            return Result.Failure<NotificationPreferences>($"Failed to update preferences: {ex.Message}");
         }
     }
 
@@ -371,7 +371,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error checking notification enabled for user {UserId}", userId);
-            return Result<bool>.Failure($"Failed to check notification enabled: {ex.Message}");
+            return Result.Failure<bool>($"Failed to check notification enabled: {ex.Message}");
         }
     }
 
@@ -412,7 +412,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error registering device token for user {UserId}", deviceToken.UserId);
-            return Result<DeviceToken>.Failure($"Failed to register device token: {ex.Message}");
+            return Result.Failure<DeviceToken>($"Failed to register device token: {ex.Message}");
         }
     }
 
@@ -427,7 +427,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
 
             if (result.DeletedCount == 0)
             {
-                return Result<bool>.Failure("Device token not found");
+                return Result.Failure<bool>("Device token not found");
             }
 
             return Result<bool>.Success(true);
@@ -435,7 +435,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error unregistering device token {TokenId}", tokenId);
-            return Result<bool>.Failure($"Failed to unregister device token: {ex.Message}");
+            return Result.Failure<bool>($"Failed to unregister device token: {ex.Message}");
         }
     }
 
@@ -450,7 +450,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
 
             if (result.DeletedCount == 0)
             {
-                return Result<bool>.Failure("Device token not found");
+                return Result.Failure<bool>("Device token not found");
             }
 
             return Result<bool>.Success(true);
@@ -458,7 +458,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error unregistering device token by value for user {UserId}", userId);
-            return Result<bool>.Failure($"Failed to unregister device token: {ex.Message}");
+            return Result.Failure<bool>($"Failed to unregister device token: {ex.Message}");
         }
     }
 
@@ -484,7 +484,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting device tokens for user {UserId}", userId);
-            return Result<List<DeviceToken>>.Failure($"Failed to get device tokens: {ex.Message}");
+            return Result.Failure<List<DeviceToken>>($"Failed to get device tokens: {ex.Message}");
         }
     }
 
@@ -503,7 +503,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating device token last used {TokenId}", tokenId);
-            return Result<bool>.Failure($"Failed to update device token: {ex.Message}");
+            return Result.Failure<bool>($"Failed to update device token: {ex.Message}");
         }
     }
 
@@ -526,7 +526,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating bulk notifications");
-            return Result<List<Notification>>.Failure($"Failed to create bulk notifications: {ex.Message}");
+            return Result.Failure<List<Notification>>($"Failed to create bulk notifications: {ex.Message}");
         }
     }
 
@@ -546,7 +546,7 @@ public class NotificationRepository : MongoRepository<Notification>, INotificati
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting expired notifications");
-            return Result<bool>.Failure($"Failed to delete expired notifications: {ex.Message}");
+            return Result.Failure<bool>($"Failed to delete expired notifications: {ex.Message}");
         }
     }
 }

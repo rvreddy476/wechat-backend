@@ -75,7 +75,7 @@ public class NotificationService : INotificationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending notification to user {UserId}", notification.RecipientId);
-            return Result<Notification>.Failure($"Failed to send notification: {ex.Message}");
+            return Result.Failure<Notification>($"Failed to send notification: {ex.Message}");
         }
     }
 
@@ -101,7 +101,7 @@ public class NotificationService : INotificationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending bulk notifications");
-            return Result<List<Notification>>.Failure($"Failed to send bulk notifications: {ex.Message}");
+            return Result.Failure<List<Notification>>($"Failed to send bulk notifications: {ex.Message}");
         }
     }
 
@@ -163,14 +163,14 @@ public class NotificationService : INotificationService
                     return await SendSMSNotificationAsync(notification);
 
                 default:
-                    return Result<bool>.Failure($"Unsupported delivery channel: {channel}");
+                    return Result.Failure<bool>($"Unsupported delivery channel: {channel}");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending notification {NotificationId} via {Channel}",
                 notification.Id, channel);
-            return Result<bool>.Failure($"Failed to send via {channel}: {ex.Message}");
+            return Result.Failure<bool>($"Failed to send via {channel}: {ex.Message}");
         }
     }
 
@@ -206,7 +206,7 @@ public class NotificationService : INotificationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending in-app notification {NotificationId}", notification.Id);
-            return Result<bool>.Failure($"Failed to send in-app notification: {ex.Message}");
+            return Result.Failure<bool>($"Failed to send in-app notification: {ex.Message}");
         }
     }
 
@@ -233,7 +233,7 @@ public class NotificationService : INotificationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending push notification {NotificationId}", notification.Id);
-            return Result<bool>.Failure($"Failed to send push notification: {ex.Message}");
+            return Result.Failure<bool>($"Failed to send push notification: {ex.Message}");
         }
     }
 
@@ -258,7 +258,7 @@ public class NotificationService : INotificationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending email notification {NotificationId}", notification.Id);
-            return Result<bool>.Failure($"Failed to send email notification: {ex.Message}");
+            return Result.Failure<bool>($"Failed to send email notification: {ex.Message}");
         }
     }
 
@@ -283,7 +283,7 @@ public class NotificationService : INotificationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending SMS notification {NotificationId}", notification.Id);
-            return Result<bool>.Failure($"Failed to send SMS notification: {ex.Message}");
+            return Result.Failure<bool>($"Failed to send SMS notification: {ex.Message}");
         }
     }
 }

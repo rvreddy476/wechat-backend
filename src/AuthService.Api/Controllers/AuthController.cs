@@ -198,7 +198,7 @@ public class AuthController : ControllerBase
 
         var response = new LoginResponse
         {
-            UserId = user.UserId,
+            UserId = user.UserId.ToString(),
             Username = user.Username,
             Email = user.Email,
             AccessToken = accessToken,
@@ -297,7 +297,7 @@ public class AuthController : ControllerBase
             return Unauthorized(ApiResponse<bool>.ErrorResponse("Invalid token"));
         }
 
-        if (string.IsNullOrWhiteSpace(request.CurrentPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
+        if (string.IsNullOrWhiteSpace(request.OldPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
         {
             return BadRequest(ApiResponse<bool>.ErrorResponse("Current and new passwords are required"));
         }
@@ -311,7 +311,7 @@ public class AuthController : ControllerBase
 
         var result = await _authRepository.ChangePasswordAsync(
             Guid.Parse(userId),
-            request.CurrentPassword,
+            request.OldPassword,
             newPasswordHash
         );
 
@@ -363,7 +363,7 @@ public class AuthController : ControllerBase
             );
 
             // TODO: Send password reset email with token
-            _logger.LogInformation("Password reset token generated for user {UserId}", user.user_id);
+            _logger.LogInformation("Password reset token generated for user {UserId}", (Guid)user.user_id);
         }
 
         return Ok(ApiResponse<string>.SuccessResponse("If the email exists, a password reset link has been sent"));

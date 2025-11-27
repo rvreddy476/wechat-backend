@@ -6,6 +6,7 @@ using NotificationService.Api.Repositories;
 using Shared.Domain.Common;
 using FcmNotification = FirebaseAdmin.Messaging.Notification;
 using AppNotification = NotificationService.Api.Models.Notification;
+using NotificationModels = NotificationService.Api.Models;
 
 namespace NotificationService.Api.Services;
 
@@ -124,7 +125,7 @@ public class FcmPushService : IPushService
         {
             _logger.LogError(ex, "Error sending FCM push notification to user {UserId}",
                 notification.RecipientId);
-            return Result<bool>.Failure($"FCM push failed: {ex.Message}");
+            return Result.Failure<bool>($"FCM push failed: {ex.Message}");
         }
     }
 
@@ -138,7 +139,7 @@ public class FcmPushService : IPushService
         if (!_isEnabled)
         {
             _logger.LogInformation("Push notifications disabled, skipping topic message");
-            return Result<string>.Failure("Push notifications disabled");
+            return Result.Failure<string>("Push notifications disabled");
         }
 
         try
@@ -179,7 +180,7 @@ public class FcmPushService : IPushService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending FCM topic message to {Topic}", topic);
-            return Result<string>.Failure($"Topic send failed: {ex.Message}");
+            return Result.Failure<string>($"Topic send failed: {ex.Message}");
         }
     }
 
@@ -187,7 +188,7 @@ public class FcmPushService : IPushService
     {
         if (!_isEnabled)
         {
-            return Result<bool>.Failure("Push notifications disabled");
+            return Result.Failure<bool>("Push notifications disabled");
         }
 
         try
@@ -206,7 +207,7 @@ public class FcmPushService : IPushService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error subscribing to topic {Topic}", topic);
-            return Result<bool>.Failure($"Subscribe error: {ex.Message}");
+            return Result.Failure<bool>($"Subscribe error: {ex.Message}");
         }
     }
 
@@ -214,7 +215,7 @@ public class FcmPushService : IPushService
     {
         if (!_isEnabled)
         {
-            return Result<bool>.Failure("Push notifications disabled");
+            return Result.Failure<bool>("Push notifications disabled");
         }
 
         try
@@ -233,7 +234,7 @@ public class FcmPushService : IPushService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error unsubscribing from topic {Topic}", topic);
-            return Result<bool>.Failure($"Unsubscribe error: {ex.Message}");
+            return Result.Failure<bool>($"Unsubscribe error: {ex.Message}");
         }
     }
 
@@ -266,7 +267,7 @@ public class FcmPushService : IPushService
         {
             message.Android = new AndroidConfig
             {
-                Priority = notification.Priority == NotificationPriority.High
+                Priority = (notification.Priority == NotificationModels.NotificationPriority.High)
                     ? Priority.High
                     : Priority.Normal,
                 Notification = new AndroidNotification
@@ -291,7 +292,7 @@ public class FcmPushService : IPushService
             {
                 Headers = new Dictionary<string, string>
                 {
-                    { "apns-priority", notification.Priority == NotificationPriority.High ? "10" : "5" },
+                    { "apns-priority", (notification.Priority == NotificationModels.NotificationPriority.High) ? "10" : "5" },
                     { "apns-expiration", DateTimeOffset.UtcNow.AddDays(7).ToUnixTimeSeconds().ToString() }
                 },
                 Aps = new Aps
@@ -327,10 +328,9 @@ public class FcmPushService : IPushService
                     Image = notification.ImageUrl,
                     Badge = "/badge-72x72.png",
                     Tag = notification.EntityId ?? notification.Id,
-                    RequireInteraction = notification.Priority == NotificationPriority.High,
+                    RequireInteraction = (notification.Priority == NotificationModels.NotificationPriority.High),
                     Silent = false,
-                    Vibrate = new[] { 200, 100, 200 },
-                    Timestamp = notification.CreatedAt.Ticks
+                    Vibrate = new[] { 200, 100, 200 }
                 },
                 FcmOptions = new WebpushFcmOptions
                 {
@@ -356,8 +356,7 @@ public class FcmPushService : IPushService
             NotificationType.Mention => "interactions",
 
             NotificationType.Follow or
-            NotificationType.FollowRequestAccepted or
-            NotificationType.FollowRequestReceived => "social",
+            NotificationType.FollowRequestAccepted => "social",
 
             NotificationType.VideoLike or
             NotificationType.VideoComment or

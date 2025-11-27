@@ -36,7 +36,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating media for user {UserId}", media.UserId);
-            return Result<Media>.Failure($"Failed to create media: {ex.Message}");
+            return Result.Failure<Media>($"Failed to create media: {ex.Message}");
         }
     }
 
@@ -50,7 +50,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
 
             if (media == null)
             {
-                return Result<Media>.Failure("Media not found");
+                return Result.Failure<Media>("Media not found");
             }
 
             return Result<Media>.Success(media);
@@ -58,7 +58,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting media {MediaId}", mediaId);
-            return Result<Media>.Failure($"Failed to get media: {ex.Message}");
+            return Result.Failure<Media>($"Failed to get media: {ex.Message}");
         }
     }
 
@@ -87,7 +87,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting media for user {UserId}", userId);
-            return Result<List<Media>>.Failure($"Failed to get user media: {ex.Message}");
+            return Result.Failure<List<Media>>($"Failed to get user media: {ex.Message}");
         }
     }
 
@@ -103,7 +103,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Media not found");
+                return Result.Failure<bool>("Media not found");
             }
 
             return Result<bool>.Success(true);
@@ -111,7 +111,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating media {MediaId}", mediaId);
-            return Result<bool>.Failure($"Failed to update media: {ex.Message}");
+            return Result.Failure<bool>($"Failed to update media: {ex.Message}");
         }
     }
 
@@ -130,7 +130,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Media not found or unauthorized");
+                return Result.Failure<bool>("Media not found or unauthorized");
             }
 
             return Result<bool>.Success(true);
@@ -138,7 +138,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting media {MediaId}", mediaId);
-            return Result<bool>.Failure($"Failed to delete media: {ex.Message}");
+            return Result.Failure<bool>($"Failed to delete media: {ex.Message}");
         }
     }
 
@@ -159,7 +159,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Media not found");
+                return Result.Failure<bool>("Media not found");
             }
 
             return Result<bool>.Success(true);
@@ -167,7 +167,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating media status {MediaId}", mediaId);
-            return Result<bool>.Failure($"Failed to update media status: {ex.Message}");
+            return Result.Failure<bool>($"Failed to update media status: {ex.Message}");
         }
     }
 
@@ -193,7 +193,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Media not found");
+                return Result.Failure<bool>("Media not found");
             }
 
             return Result<bool>.Success(true);
@@ -201,7 +201,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating media URLs {MediaId}", mediaId);
-            return Result<bool>.Failure($"Failed to update media URLs: {ex.Message}");
+            return Result.Failure<bool>($"Failed to update media URLs: {ex.Message}");
         }
     }
 
@@ -220,7 +220,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating upload for user {UserId}", upload.UserId);
-            return Result<Upload>.Failure($"Failed to create upload: {ex.Message}");
+            return Result.Failure<Upload>($"Failed to create upload: {ex.Message}");
         }
     }
 
@@ -234,15 +234,15 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
 
             if (upload == null)
             {
-                return Result<Upload>.Failure("Upload not found");
+                return Result.Failure<Upload>("Upload not found");
             }
 
-            return Result<Upload>.Success(upload);
+            return Result.Success(upload);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting upload {UploadKey}", uploadKey);
-            return Result<Upload>.Failure($"Failed to get upload: {ex.Message}");
+            return Result.Failure<Upload>($"Failed to get upload: {ex.Message}");
         }
     }
 
@@ -259,7 +259,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Upload not found");
+                return Result.Failure<bool>("Upload not found");
             }
 
             return Result<bool>.Success(true);
@@ -267,7 +267,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating upload progress {UploadKey}", uploadKey);
-            return Result<bool>.Failure($"Failed to update upload progress: {ex.Message}");
+            return Result.Failure<bool>($"Failed to update upload progress: {ex.Message}");
         }
     }
 
@@ -285,7 +285,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Upload not found");
+                return Result.Failure<bool>("Upload not found");
             }
 
             return Result<bool>.Success(true);
@@ -293,7 +293,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error completing upload {UploadKey}", uploadKey);
-            return Result<bool>.Failure($"Failed to complete upload: {ex.Message}");
+            return Result.Failure<bool>($"Failed to complete upload: {ex.Message}");
         }
     }
 
@@ -310,7 +310,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Upload not found");
+                return Result.Failure<bool>("Upload not found");
             }
 
             return Result<bool>.Success(true);
@@ -318,7 +318,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error failing upload {UploadKey}", uploadKey);
-            return Result<bool>.Failure($"Failed to fail upload: {ex.Message}");
+            return Result.Failure<bool>($"Failed to fail upload: {ex.Message}");
         }
     }
 
@@ -343,7 +343,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error cleaning up expired uploads");
-            return Result<bool>.Failure($"Failed to cleanup expired uploads: {ex.Message}");
+            return Result.Failure<bool>($"Failed to cleanup expired uploads: {ex.Message}");
         }
     }
 
@@ -362,7 +362,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating processing job for media {MediaId}", job.MediaId);
-            return Result<MediaProcessingJob>.Failure($"Failed to create processing job: {ex.Message}");
+            return Result.Failure<MediaProcessingJob>($"Failed to create processing job: {ex.Message}");
         }
     }
 
@@ -376,7 +376,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
 
             if (job == null)
             {
-                return Result<MediaProcessingJob>.Failure("Processing job not found");
+                return Result.Failure<MediaProcessingJob>("Processing job not found");
             }
 
             return Result<MediaProcessingJob>.Success(job);
@@ -384,7 +384,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting processing job {JobId}", jobId);
-            return Result<MediaProcessingJob>.Failure($"Failed to get processing job: {ex.Message}");
+            return Result.Failure<MediaProcessingJob>($"Failed to get processing job: {ex.Message}");
         }
     }
 
@@ -403,7 +403,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting pending processing jobs");
-            return Result<List<MediaProcessingJob>>.Failure($"Failed to get pending jobs: {ex.Message}");
+            return Result.Failure<List<MediaProcessingJob>>($"Failed to get pending jobs: {ex.Message}");
         }
     }
 
@@ -430,7 +430,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Processing job not found");
+                return Result.Failure<bool>("Processing job not found");
             }
 
             return Result<bool>.Success(true);
@@ -438,7 +438,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating job progress {JobId}", jobId);
-            return Result<bool>.Failure($"Failed to update job progress: {ex.Message}");
+            return Result.Failure<bool>($"Failed to update job progress: {ex.Message}");
         }
     }
 
@@ -456,7 +456,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Processing job not found");
+                return Result.Failure<bool>("Processing job not found");
             }
 
             return Result<bool>.Success(true);
@@ -464,7 +464,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error completing job {JobId}", jobId);
-            return Result<bool>.Failure($"Failed to complete job: {ex.Message}");
+            return Result.Failure<bool>($"Failed to complete job: {ex.Message}");
         }
     }
 
@@ -475,7 +475,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
             var job = await _jobsCollection.Find(j => j.Id == jobId).FirstOrDefaultAsync();
             if (job == null)
             {
-                return Result<bool>.Failure("Processing job not found");
+                return Result.Failure<bool>("Processing job not found");
             }
 
             var updateBuilder = Builders<MediaProcessingJob>.Update
@@ -499,7 +499,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
 
             if (result.MatchedCount == 0)
             {
-                return Result<bool>.Failure("Processing job not found");
+                return Result.Failure<bool>("Processing job not found");
             }
 
             return Result<bool>.Success(true);
@@ -507,7 +507,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error failing job {JobId}", jobId);
-            return Result<bool>.Failure($"Failed to fail job: {ex.Message}");
+            return Result.Failure<bool>($"Failed to fail job: {ex.Message}");
         }
     }
 
@@ -546,7 +546,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error searching media with query {Query}", query);
-            return Result<List<Media>>.Failure($"Failed to search media: {ex.Message}");
+            return Result.Failure<List<Media>>($"Failed to search media: {ex.Message}");
         }
     }
 
@@ -570,7 +570,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting storage used for user {UserId}", userId);
-            return Result<long>.Failure($"Failed to get storage used: {ex.Message}");
+            return Result.Failure<long>($"Failed to get storage used: {ex.Message}");
         }
     }
 
@@ -593,7 +593,7 @@ public class MediaRepository : MongoRepository<Media>, IMediaRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting media count for user {UserId}", userId);
-            return Result<int>.Failure($"Failed to get media count: {ex.Message}");
+            return Result.Failure<int>($"Failed to get media count: {ex.Message}");
         }
     }
 
