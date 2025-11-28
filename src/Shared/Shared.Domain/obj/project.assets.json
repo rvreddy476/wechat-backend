@@ -1,11 +1,11 @@
 {
   "version": 3,
   "targets": {
-    "net8.0": {}
+    "net10.0": {}
   },
   "libraries": {},
   "projectFileDependencyGroups": {
-    "net8.0": []
+    "net10.0": []
   },
   "packageFolders": {
     "C:\\Users\\hp\\.nuget\\packages\\": {},
@@ -14,11 +14,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\workspace\\wechat\\backend\\src\\Shared\\Shared.Domain\\Shared.Domain.csproj",
+      "projectUniqueName": "C:\\workspace\\New folder\\wechat-backend\\src\\Shared\\Shared.Domain\\Shared.Domain.csproj",
       "projectName": "Shared.Domain",
-      "projectPath": "C:\\workspace\\wechat\\backend\\src\\Shared\\Shared.Domain\\Shared.Domain.csproj",
+      "projectPath": "C:\\workspace\\New folder\\wechat-backend\\src\\Shared\\Shared.Domain\\Shared.Domain.csproj",
       "packagesPath": "C:\\Users\\hp\\.nuget\\packages\\",
-      "outputPath": "C:\\workspace\\wechat\\backend\\src\\Shared\\Shared.Domain\\obj\\",
+      "outputPath": "C:\\workspace\\New folder\\wechat-backend\\src\\Shared\\Shared.Domain\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -29,7 +29,7 @@
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
-        "net8.0"
+        "net10.0"
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
@@ -37,8 +37,8 @@
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
-        "net8.0": {
-          "targetAlias": "net8.0",
+        "net10.0": {
+          "targetAlias": "net10.0",
           "projectReferences": {}
         }
       },
@@ -50,13 +50,13 @@
       "restoreAuditProperties": {
         "enableAudit": "true",
         "auditLevel": "low",
-        "auditMode": "direct"
+        "auditMode": "all"
       },
       "SdkAnalysisLevel": "10.0.100"
     },
     "frameworks": {
-      "net8.0": {
-        "targetAlias": "net8.0",
+      "net10.0": {
+        "targetAlias": "net10.0",
         "imports": [
           "net461",
           "net462",

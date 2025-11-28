@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "NGk4AzKpMFg=",
+  "dgSpecHash": "cO6ZcR0eoSg=",
   "success": true,
-  "projectFilePath": "C:\\workspace\\wechat\\backend\\src\\Shared\\Shared.Domain\\Shared.Domain.csproj",
+  "projectFilePath": "C:\\workspace\\New folder\\wechat-backend\\src\\Shared\\Shared.Domain\\Shared.Domain.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }

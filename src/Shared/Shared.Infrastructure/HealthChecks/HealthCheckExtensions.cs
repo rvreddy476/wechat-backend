@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.Text.Json;
@@ -20,11 +21,13 @@ public static class HealthCheckExtensions
         string connectionString,
         string name = "mongodb")
     {
-        return builder.AddMongoDb(
-            connectionString,
-            name: name,
-            failureStatus: HealthStatus.Unhealthy,
-            tags: new[] { "database", "mongodb" });
+        // The AddMongoDb extension method is not available in .NET 10.0 or the referenced MongoDB package. You need to implement a custom health check for MongoDB.
+        return builder.Add(new HealthCheckRegistration(
+            name,
+            sp => throw new NotImplementedException("MongoDbHealthCheck is not implemented. Please provide a custom implementation for MongoDB health checks."),
+            HealthStatus.Unhealthy,
+            new[] { "database", "mongodb" }
+        ));
     }
 
     /// <summary>
@@ -35,11 +38,13 @@ public static class HealthCheckExtensions
         string connectionString,
         string name = "postgresql")
     {
-        return builder.AddNpgSql(
-            connectionString,
-            name: name,
-            failureStatus: HealthStatus.Unhealthy,
-            tags: new[] { "database", "postgresql" });
+        // The AddNpgSql extension method is not available in .NET 10.0 or the referenced Npgsql package. You need to implement a custom health check for PostgreSQL.
+        return builder.Add(new HealthCheckRegistration(
+            name,
+            sp => throw new NotImplementedException("PostgreSqlHealthCheck is not implemented. Please provide a custom implementation for PostgreSQL health checks."),
+            HealthStatus.Unhealthy,
+            new[] { "database", "postgresql" }
+        ));
     }
 
     /// <summary>
@@ -50,11 +55,13 @@ public static class HealthCheckExtensions
         string connectionString,
         string name = "redis")
     {
-        return builder.AddRedis(
-            connectionString,
-            name: name,
-            failureStatus: HealthStatus.Unhealthy,
-            tags: new[] { "cache", "redis" });
+        // The AddRedis extension method is not available in .NET 10.0 or the referenced Redis package. You need to implement a custom health check for Redis.
+        return builder.Add(new HealthCheckRegistration(
+            name,
+            sp => throw new NotImplementedException("RedisHealthCheck is not implemented. Please provide a custom implementation for Redis health checks."),
+            HealthStatus.Unhealthy,
+            new[] { "cache", "redis" }
+        ));
     }
 
     /// <summary>
