@@ -38,7 +38,11 @@ public class RedisService : IRedisService
     public async Task<bool> SetAsync<T>(string key, T value, TimeSpan? expiry = null)
     {
         var serializedValue = JsonSerializer.Serialize(value);
-        return await _database.StringSetAsync(key, serializedValue, expiry);
+        if (expiry.HasValue)
+        {
+            return await _database.StringSetAsync(key, serializedValue, new StackExchange.Redis.Expiration(expiry.Value));
+        }
+        return await _database.StringSetAsync(key, serializedValue, StackExchange.Redis.Expiration.Default);
     }
 
     public async Task<bool> DeleteAsync(string key)
@@ -63,7 +67,12 @@ public class RedisService : IRedisService
 
     public async Task<bool> SetStringAsync(string key, string value, TimeSpan? expiry = null)
     {
-        return await _database.StringSetAsync(key, value, expiry);
+        if (expiry.HasValue)
+        {
+            return await _database.StringSetAsync(key, value, new StackExchange.Redis.Expiration(expiry.Value));
+        }
+
+        return await _database.StringSetAsync(key, value, StackExchange.Redis.Expiration.Default);
     }
 
     public async Task<string?> GetStringAsync(string key)

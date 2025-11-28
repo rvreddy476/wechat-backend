@@ -32,3 +32,10 @@
 /src/MediaService.Api/bin/Debug/net8.0
 /src/VideoProcessing.Worker/logs/video-processing-20251126.txt
 /src/VideoProcessing.Worker/logs/video-processing-20251127.txt
+/src/Shared/.vs/Shared
+/src/Shared/Shared.Contracts/bin/Debug/net10.0
+/src/Shared/Shared.Domain/bin/Debug/net10.0
+/src/Shared/Shared.Infrastructure/bin/Debug/net10.0
+/src/Shared/Shared.Contracts/obj/Debug/net10.0
+/src/Shared/Shared.Infrastructure/obj/Debug/net10.0
+/src/Shared/Shared.Domain/obj/Debug/net10.0
