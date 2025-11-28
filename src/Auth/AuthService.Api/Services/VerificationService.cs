@@ -56,7 +56,7 @@ public class VerificationService : IVerificationService
             var canRequest = await CanRequestVerificationCodeAsync(userId, VerificationType.Email);
             if (!canRequest.IsSuccess)
             {
-                return Result<VerificationCode>.Failure(canRequest.Error);
+                return Result.Failure<VerificationCode>(canRequest.Error);
             }
 
             // Generate code
@@ -81,7 +81,7 @@ public class VerificationService : IVerificationService
 
             if (result == null)
             {
-                return Result<VerificationCode>.Failure("Failed to create verification code");
+                return Result.Failure<VerificationCode>("Failed to create verification code");
             }
 
             var verificationCode = new VerificationCode
@@ -108,7 +108,7 @@ public class VerificationService : IVerificationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending email verification code for user {UserId}", userId);
-            return Result<VerificationCode>.Failure("An error occurred while sending verification code");
+            return Result.Failure<VerificationCode>("An error occurred while sending verification code");
         }
     }
 
@@ -122,7 +122,7 @@ public class VerificationService : IVerificationService
             var canRequest = await CanRequestVerificationCodeAsync(userId, VerificationType.Phone);
             if (!canRequest.IsSuccess)
             {
-                return Result<VerificationCode>.Failure(canRequest.Error);
+                return Result.Failure<VerificationCode>(canRequest.Error);
             }
 
             // Generate code
@@ -147,7 +147,7 @@ public class VerificationService : IVerificationService
 
             if (result == null)
             {
-                return Result<VerificationCode>.Failure("Failed to create verification code");
+                return Result.Failure<VerificationCode>("Failed to create verification code");
             }
 
             var verificationCode = new VerificationCode
@@ -174,7 +174,7 @@ public class VerificationService : IVerificationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending phone verification code for user {UserId}", userId);
-            return Result<VerificationCode>.Failure("An error occurred while sending verification code");
+            return Result.Failure<VerificationCode>("An error occurred while sending verification code");
         }
     }
 
@@ -201,7 +201,7 @@ public class VerificationService : IVerificationService
 
             if (result == null)
             {
-                return Result<bool>.Failure("Verification failed");
+                return Result.Failure<bool>("Verification failed");
             }
 
             bool isValid = result.is_valid;
@@ -209,15 +209,15 @@ public class VerificationService : IVerificationService
 
             if (!isValid)
             {
-                return Result<bool>.Failure(message);
+                return Result.Failure<bool>(message);
             }
 
-            return Result<bool>.Success(true, message);
+            return Result.Success(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error verifying code for user {UserId}", userId);
-            return Result<bool>.Failure("An error occurred while verifying code");
+            return Result.Failure<bool>("An error occurred while verifying code");
         }
     }
 
@@ -243,7 +243,7 @@ public class VerificationService : IVerificationService
 
             if (result == null)
             {
-                return Result<bool>.Failure("Failed to check rate limiting");
+                return Result.Failure<bool>("Failed to check rate limiting");
             }
 
             bool canRequest = result.can_request;
@@ -251,7 +251,7 @@ public class VerificationService : IVerificationService
 
             if (!canRequest)
             {
-                return Result<bool>.Failure(message);
+                return Result.Failure<bool>(message);
             }
 
             return Result<bool>.Success(true);
@@ -259,7 +259,7 @@ public class VerificationService : IVerificationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error checking rate limit for user {UserId}", userId);
-            return Result<bool>.Failure("An error occurred while checking rate limit");
+            return Result.Failure<bool>("An error occurred while checking rate limit");
         }
     }
 
@@ -293,7 +293,7 @@ public class VerificationService : IVerificationService
 
             if (result == null)
             {
-                return Result<VerificationCode>.Failure("Failed to resend verification code");
+                return Result.Failure<VerificationCode>("Failed to resend verification code");
             }
 
             bool canResend = result.can_resend;
@@ -301,7 +301,7 @@ public class VerificationService : IVerificationService
 
             if (!canResend)
             {
-                return Result<VerificationCode>.Failure(message);
+                return Result.Failure<VerificationCode>(message);
             }
 
             var verificationCode = new VerificationCode
@@ -336,7 +336,7 @@ public class VerificationService : IVerificationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error resending verification code for user {UserId}", userId);
-            return Result<VerificationCode>.Failure("An error occurred while resending verification code");
+            return Result.Failure<VerificationCode>("An error occurred while resending verification code");
         }
     }
 }

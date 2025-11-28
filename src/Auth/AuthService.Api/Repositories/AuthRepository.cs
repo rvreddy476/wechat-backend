@@ -1,8 +1,10 @@
-using System.Data;
+using Amazon.Runtime.Internal;
+using AuthService.Api.Models;
 using Dapper;
 using Npgsql;
-using AuthService.Api.Models;
 using Shared.Domain.Common;
+using System.Data;
+using System.Net;
 
 namespace AuthService.Api.Repositories;
 
@@ -32,29 +34,40 @@ public class AuthRepository : IAuthRepository
         string? handler = null,
         string roleName = "User")
     {
+        using var connection = CreateConnection();
+        const string sql = @"
+            SELECT * FROM auth.fn_registeruser(
+                @FirstName, 
+                @LastName, 
+                @Username, 
+                @Email, 
+                @PasswordHash, 
+                @PhoneNumber, 
+                @Gender, 
+                @DateOfBirth, 
+                @Handler, 
+                @IpAddress, 
+                @UserAgent
+            )";
+
+        var parameters = new DynamicParameters();
+        parameters.Add("@FirstName", firstName, DbType.String);
+        parameters.Add("@LastName", lastName, DbType.String);
+        parameters.Add("@Username", username, DbType.String);
+        parameters.Add("@Email", email, DbType.String);
+        parameters.Add("@PasswordHash", passwordHash, DbType.String);
+        parameters.Add("@PhoneNumber", phoneNumber, DbType.String);
+        parameters.Add("@Gender", gender, DbType.String);
+        parameters.Add("@DateOfBirth", dateOfBirth, DbType.Date);
+        parameters.Add("@Handler", handler, DbType.String);
+        parameters.Add("@IpAddress", "", DbType.String);
+        parameters.Add("@UserAgent", "", DbType.String);
+
         try
         {
-            using var connection = CreateConnection();
-
-            var parameters = new
-            {
-                p_first_name = firstName,
-                p_last_name = lastName,
-                p_username = username,
-                p_email = email,
-                p_password_hash = passwordHash,
-                p_phone_number = phoneNumber,
-                p_handler = handler,
-                p_gender = gender,
-                p_date_of_birth = dateOfBirth,
-                p_ip_address = (string?)null,
-                p_user_agent = (string?)null
-            };
-
-            var result = await connection.QueryFirstOrDefaultAsync<dynamic>(
-                "auth.sp_RegisterUser",
-                parameters,
-                commandType: CommandType.StoredProcedure
+            var result = await connection.QueryFirstOrDefaultAsync<UserDto>(
+                sql,
+                parameters
             );
 
             if (result == null)
@@ -62,44 +75,24 @@ public class AuthRepository : IAuthRepository
                 return Result.Failure<UserDto>("Registration failed");
             }
 
-            var userDto = new UserDto
-            {
-                UserId = result.user_id,
-                FirstName = result.first_name,
-                LastName = result.last_name,
-                Username = result.username,
-                Email = result.email,
-                PhoneNumber = result.phone_number,
-                Handler = result.handler,
-                IsEmailVerified = result.is_email_verified,
-                IsPhoneVerified = result.is_phone_verified,
-                IsActive = result.is_active,
-                IsDeleted = result.is_deleted,
-                Bio = result.bio,
-                AvatarUrl = result.avatar_url,
-                CreatedAt = result.created_at,
-                UpdatedAt = result.updated_at,
-                Roles = new List<string> { roleName }
-            };
-
-            return Result<UserDto>.Success(userDto);
+            return Result<UserDto>.Success(result);
         }
         catch (PostgresException ex) when (ex.SqlState == "P0001") // raise_exception
         {
             var errorMessage = ex.MessageText ?? "Registration failed";
             _logger.LogWarning("Registration failed: {Error}", errorMessage);
-            return Result<UserDto>.Failure(errorMessage);
+            return Result.Failure<UserDto>(errorMessage);
         }
         catch (PostgresException ex) when (ex.SqlState == "23505") // Unique violation
         {
             if (ex.ConstraintName?.Contains("email") == true)
                 return Result.Failure<UserDto>(Errors.Authentication.DuplicateEmail);
             if (ex.ConstraintName?.Contains("username") == true)
-                return Result<UserDto>.Failure(Errors.Authentication.DuplicateUsername);
+                return Result.Failure<UserDto>(Errors.Authentication.DuplicateUsername);
             if (ex.ConstraintName?.Contains("phone") == true)
-                return Result<UserDto>.Failure("Phone number already registered");
+                return Result.Failure<UserDto>("Phone number already registered");
             if (ex.ConstraintName?.Contains("handler") == true)
-                return Result<UserDto>.Failure("Handler already taken");
+                return Result.Failure<UserDto>("Handler already taken");
 
             return Result.Failure<UserDto>("Registration failed: Duplicate entry");
         }
@@ -168,7 +161,7 @@ public class AuthRepository : IAuthRepository
         {
             using var connection = CreateConnection();
 
-            var result = await connection.QueryFirstOrDefaultAsync<dynamic>(
+            var result = await connection.QueryFirstOrDefaultAsync<UserDto>(
                 "auth.sp_GetUserById",
                 new { p_user_id = userId },
                 commandType: CommandType.StoredProcedure
@@ -185,25 +178,8 @@ public class AuthRepository : IAuthRepository
                 new { UserId = userId }
             );
 
-            var userDto = new UserDto
-            {
-                UserId = result.user_id,
-                Username = result.username,
-                Email = result.email,
-                PhoneNumber = result.phone_number,
-                IsEmailVerified = result.is_email_verified,
-                IsPhoneVerified = result.is_phone_verified,
-                IsActive = result.is_active,
-                IsDeleted = result.is_deleted,
-                Bio = result.bio,
-                AvatarUrl = result.avatar_url,
-                CreatedAt = result.created_at,
-                UpdatedAt = result.updated_at,
-                LastLoginAt = result.last_login_at,
-                Roles = roles.ToList()
-            };
-
-            return Result<UserDto>.Success(userDto);
+           
+            return Result<UserDto>.Success(result);
         }
         catch (Exception ex)
         {

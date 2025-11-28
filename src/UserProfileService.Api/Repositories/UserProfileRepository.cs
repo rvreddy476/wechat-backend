@@ -626,19 +626,19 @@ public class UserProfileRepository : IUserProfileRepository
             // Cannot send friend request to yourself
             if (senderId == receiverId)
             {
-                return Result<FriendRequest>.Failure("Cannot send friend request to yourself");
+                return Result.Failure<FriendRequest>("Cannot send friend request to yourself");
             }
 
             // Check if blocked
             if (await IsBlockedAsync(senderId, receiverId))
             {
-                return Result<FriendRequest>.Failure("Cannot send friend request to this user");
+                return Result.Failure<FriendRequest>("Cannot send friend request to this user");
             }
 
             // Check if already friends
             if (await AreFriendsAsync(senderId, receiverId))
             {
-                return Result<FriendRequest>.Failure("You are already friends with this user");
+                return Result.Failure<FriendRequest>("You are already friends with this user");
             }
 
             // Check if there's already a pending request
@@ -653,11 +653,11 @@ public class UserProfileRepository : IUserProfileRepository
             {
                 if (existingRequest.SenderId == senderId)
                 {
-                    return Result<FriendRequest>.Failure("Friend request already sent");
+                    return Result.Failure<FriendRequest>("Friend request already sent");
                 }
                 else
                 {
-                    return Result<FriendRequest>.Failure("This user has already sent you a friend request");
+                    return Result.Failure<FriendRequest>("This user has already sent you a friend request");
                 }
             }
 
@@ -667,7 +667,7 @@ public class UserProfileRepository : IUserProfileRepository
 
             if (!senderProfile.IsSuccess || !receiverProfile.IsSuccess)
             {
-                return Result<FriendRequest>.Failure("User not found");
+                return Result.Failure<FriendRequest>("User not found");
             }
 
             var friendRequest = new FriendRequest
@@ -685,7 +685,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending friend request from {SenderId} to {ReceiverId}", senderId, receiverId);
-            return Result<FriendRequest>.Failure("Failed to send friend request");
+            return Result.Failure<FriendRequest>("Failed to send friend request");
         }
     }
 
@@ -705,7 +705,7 @@ public class UserProfileRepository : IUserProfileRepository
 
             if (friendRequest == null)
             {
-                return Result<bool>.Failure("Friend request not found");
+                return Result.Failure<bool>("Friend request not found");
             }
 
             // Update friend request status
@@ -738,7 +738,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error accepting friend request {RequestId}", requestId);
-            return Result<bool>.Failure("Failed to accept friend request");
+            return Result.Failure<bool>("Failed to accept friend request");
         }
     }
 
@@ -758,7 +758,7 @@ public class UserProfileRepository : IUserProfileRepository
 
             if (friendRequest == null)
             {
-                return Result<bool>.Failure("Friend request not found");
+                return Result.Failure<bool>("Friend request not found");
             }
 
             friendRequest.Status = FriendRequestStatus.Rejected;
@@ -772,7 +772,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error rejecting friend request {RequestId}", requestId);
-            return Result<bool>.Failure("Failed to reject friend request");
+            return Result.Failure<bool>("Failed to reject friend request");
         }
     }
 
@@ -792,7 +792,7 @@ public class UserProfileRepository : IUserProfileRepository
 
             if (friendRequest == null)
             {
-                return Result<bool>.Failure("Friend request not found");
+                return Result.Failure<bool>("Friend request not found");
             }
 
             friendRequest.Status = FriendRequestStatus.Cancelled;
@@ -805,7 +805,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error cancelling friend request {RequestId}", requestId);
-            return Result<bool>.Failure("Failed to cancel friend request");
+            return Result.Failure<bool>("Failed to cancel friend request");
         }
     }
 
@@ -821,7 +821,7 @@ public class UserProfileRepository : IUserProfileRepository
 
             if (friendRequest == null)
             {
-                return Result<FriendRequest>.Failure("Friend request not found");
+                return Result.Failure<FriendRequest>("Friend request not found");
             }
 
             return Result<FriendRequest>.Success(friendRequest);
@@ -829,7 +829,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting friend request {RequestId}", requestId);
-            return Result<FriendRequest>.Failure("Failed to get friend request");
+            return Result.Failure<FriendRequest>("Failed to get friend request");
         }
     }
 
@@ -846,7 +846,7 @@ public class UserProfileRepository : IUserProfileRepository
 
             if (friendRequest == null)
             {
-                return Result<FriendRequest>.Failure("Friend request not found");
+                return Result.Failure<FriendRequest>("Friend request not found");
             }
 
             return Result<FriendRequest>.Success(friendRequest);
@@ -854,7 +854,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting friend request between {SenderId} and {ReceiverId}", senderId, receiverId);
-            return Result<FriendRequest>.Failure("Failed to get friend request");
+            return Result.Failure<FriendRequest>("Failed to get friend request");
         }
     }
 
@@ -877,7 +877,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting pending friend requests sent by {UserId}", userId);
-            return Result<List<FriendRequest>>.Failure("Failed to get pending friend requests");
+            return Result.Failure<List<FriendRequest>>("Failed to get pending friend requests");
         }
     }
 
@@ -900,7 +900,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting pending friend requests received by {UserId}", userId);
-            return Result<List<FriendRequest>>.Failure("Failed to get pending friend requests");
+            return Result.Failure<List<FriendRequest>>("Failed to get pending friend requests");
         }
     }
 
@@ -963,7 +963,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing friend {UserId} <-> {FriendId}", userId, friendId);
-            return Result<bool>.Failure("Failed to remove friend");
+            return Result.Failure<bool>("Failed to remove friend");
         }
     }
 
@@ -989,7 +989,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting friends for user {UserId}", userId);
-            return Result<List<UserProfile>>.Failure("Failed to get friends");
+            return Result.Failure<List<UserProfile>>("Failed to get friends");
         }
     }
 
@@ -1007,7 +1007,7 @@ public class UserProfileRepository : IUserProfileRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting friends count for user {UserId}", userId);
-            return Result<int>.Failure("Failed to get friends count");
+            return Result.Failure<int>("Failed to get friends count");
         }
     }
 }

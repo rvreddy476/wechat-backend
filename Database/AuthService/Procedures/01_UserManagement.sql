@@ -8,95 +8,62 @@ SET search_path TO auth, public;
 -- =============================================
 -- Procedure: Register New User
 -- =============================================
-CREATE OR REPLACE FUNCTION auth.sp_RegisterUser(
-    p_FirstName VARCHAR(100),
-    p_LastName VARCHAR(100),
-    p_Username VARCHAR(50),
-    p_Email VARCHAR(255),
-    p_PasswordHash VARCHAR(255),
-    p_PhoneNumber VARCHAR(20),
-    p_Gender VARCHAR(20),         -- MANDATORY
-    p_DateOfBirth DATE,           -- MANDATORY
-    p_Handler VARCHAR(50) DEFAULT NULL,
-    p_IpAddress VARCHAR(45) DEFAULT NULL,
-    p_UserAgent TEXT DEFAULT NULL
+CREATE OR REPLACE FUNCTION auth.fn_registeruser(
+    p_FirstName      VARCHAR(100),
+    p_LastName       VARCHAR(100),
+    p_Username       VARCHAR(50),
+    p_Email          VARCHAR(255),
+    p_PasswordHash   VARCHAR(255),
+    p_PhoneNumber    VARCHAR(20),
+    p_Gender         VARCHAR(20),
+    p_DateOfBirth    DATE,
+    p_Handler        VARCHAR(50),
+    p_IpAddress      VARCHAR(45),
+    p_UserAgent      TEXT
 )
 RETURNS TABLE (
-    user_id UUID,
-    username VARCHAR(50),
-    email VARCHAR(255),
-    first_name VARCHAR(100),
-    last_name VARCHAR(100),
-    phone_number VARCHAR(20),
-    handler VARCHAR(50),
-    is_email_verified BOOLEAN,
-    is_phone_verified BOOLEAN,
-    is_active BOOLEAN,
-    is_deleted BOOLEAN,
-    bio TEXT,
-    avatar_url TEXT,
-    created_at TIMESTAMP WITH TIME ZONE,
-    updated_at TIMESTAMP WITH TIME ZONE
-) AS $$
+    user_id              UUID,
+    username             VARCHAR(50),
+    email                VARCHAR(255),
+    first_name           VARCHAR(100),
+    last_name            VARCHAR(100),
+    phone_number         VARCHAR(20),
+    handler              VARCHAR(50),
+    is_email_verified    BOOLEAN,
+    is_phone_verified    BOOLEAN,
+    is_active            BOOLEAN,
+    is_deleted           BOOLEAN,
+    bio                  TEXT,
+    avatar_url           TEXT,
+    created_at           TIMESTAMPTZ,
+    updated_at           TIMESTAMPTZ
+)
+LANGUAGE plpgsql
+AS $$
 DECLARE
     v_UserId UUID;
     v_RoleId UUID;
 BEGIN
-    -- Validate required fields
-    IF p_FirstName IS NULL OR TRIM(p_FirstName) = '' THEN
-        RAISE EXCEPTION 'First name is required';
-    END IF;
-
-    IF p_LastName IS NULL OR TRIM(p_LastName) = '' THEN
-        RAISE EXCEPTION 'Last name is required';
-    END IF;
-
-    IF p_Email IS NULL OR TRIM(p_Email) = '' THEN
-        RAISE EXCEPTION 'Email is required';
-    END IF;
-
-    IF p_PhoneNumber IS NULL OR TRIM(p_PhoneNumber) = '' THEN
-        RAISE EXCEPTION 'Phone number is required';
-    END IF;
-
-    -- Validate gender (MANDATORY)
-    IF p_Gender IS NULL OR TRIM(p_Gender) = '' THEN
-        RAISE EXCEPTION 'Gender is required';
-    END IF;
-
-    IF p_Gender NOT IN ('Male', 'Female', 'Other', 'PreferNotToSay') THEN
-        RAISE EXCEPTION 'Invalid gender value. Must be: Male, Female, Other, or PreferNotToSay';
-    END IF;
-
-    -- Validate date of birth (MANDATORY)
-    IF p_DateOfBirth IS NULL THEN
-        RAISE EXCEPTION 'Date of birth is required';
-    END IF;
-
-    IF p_DateOfBirth > CURRENT_DATE THEN
-        RAISE EXCEPTION 'Date of birth cannot be in the future';
-    END IF;
-
     -- Check if email already exists
     IF EXISTS (SELECT 1 FROM auth.Users WHERE Email = p_Email AND IsDeleted = FALSE) THEN
         RAISE EXCEPTION 'Email already registered';
     END IF;
-
+    
     -- Check if username already exists
     IF EXISTS (SELECT 1 FROM auth.Users WHERE Username = p_Username AND IsDeleted = FALSE) THEN
         RAISE EXCEPTION 'Username already taken';
     END IF;
-
+    
     -- Check if phone number already exists
     IF EXISTS (SELECT 1 FROM auth.Users WHERE PhoneNumber = p_PhoneNumber AND IsDeleted = FALSE) THEN
         RAISE EXCEPTION 'Phone number already registered';
     END IF;
-
+    
     -- Check if handler already exists (if provided)
     IF p_Handler IS NOT NULL AND EXISTS (SELECT 1 FROM auth.Users WHERE Handler = p_Handler AND IsDeleted = FALSE) THEN
         RAISE EXCEPTION 'Handler already taken';
     END IF;
-
+    
     -- Insert new user
     INSERT INTO auth.Users (
         FirstName,
@@ -120,22 +87,22 @@ BEGIN
         p_Gender,
         p_DateOfBirth
     )
-    RETURNING Users.UserId INTO v_UserId;
-
+    RETURNING UserId INTO v_UserId;
+    
     -- Assign default "User" role
     SELECT r.RoleId INTO v_RoleId
     FROM auth.Roles r
     WHERE r.RoleName = 'User';
-
+    
     IF v_RoleId IS NOT NULL THEN
         INSERT INTO auth.UserRoles (UserId, RoleId)
         VALUES (v_UserId, v_RoleId);
     END IF;
-
+    
     -- Log registration
     INSERT INTO auth.AuditLogs (UserId, Action, EntityType, EntityId, IpAddress, UserAgent, Success)
     VALUES (v_UserId, 'USER_REGISTERED', 'USER', v_UserId, p_IpAddress, p_UserAgent, TRUE);
-
+    
     -- Return user data
     RETURN QUERY
     SELECT
@@ -150,8 +117,8 @@ BEGIN
         u.PhoneNumberVerified,
         u.IsActive,
         u.IsDeleted,
-        NULL::TEXT as bio,
-        NULL::TEXT as avatar_url,
+        NULL::TEXT AS bio,
+        NULL::TEXT AS avatar_url,
         u.CreatedAt,
         u.UpdatedAt
     FROM auth.Users u

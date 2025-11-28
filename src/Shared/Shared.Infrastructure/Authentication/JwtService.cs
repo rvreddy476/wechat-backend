@@ -8,7 +8,7 @@ namespace Shared.Infrastructure.Authentication;
 
 public interface IJwtService
 {
-    string GenerateAccessToken(string userId, string username, string email, List<string> roles);
+    string GenerateAccessToken(string userId, string username, string email);
     string GenerateRefreshToken();
     ClaimsPrincipal? ValidateToken(string token);
     string? GetUserIdFromToken(string token);
@@ -36,8 +36,12 @@ public class JwtService : IJwtService
         };
     }
 
-    public string GenerateAccessToken(string userId, string username, string email, List<string> roles)
+    public string GenerateAccessToken(string userId, string username, string email)
     {
+       var roles = new List<string>();
+        roles.Add("Admin");
+        roles.Add("Creator");
+
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, userId),
