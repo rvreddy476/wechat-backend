@@ -90,7 +90,7 @@ services:
   chat-service:
     build:
       context: ./src
-      dockerfile: ChatService.Api/Dockerfile
+      dockerfile: Chat/Dockerfile
     container_name: wechat-chat-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
@@ -117,7 +117,7 @@ services:
   userprofile-service:
     build:
       context: ./src
-      dockerfile: UserProfileService.Api/Dockerfile
+      dockerfile: UserProfile/Dockerfile
     container_name: wechat-userprofile-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
@@ -144,7 +144,7 @@ services:
   postfeed-service:
     build:
       context: ./src
-      dockerfile: PostFeedService.Api/Dockerfile
+      dockerfile: PostFeed/Dockerfile
     container_name: wechat-postfeed-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
@@ -171,7 +171,7 @@ services:
   media-service:
     build:
       context: ./src
-      dockerfile: MediaService.Api/Dockerfile
+      dockerfile: Media/Dockerfile
     container_name: wechat-media-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
@@ -200,7 +200,7 @@ services:
   video-service:
     build:
       context: ./src
-      dockerfile: VideoService.Api/Dockerfile
+      dockerfile: Video/Dockerfile
     container_name: wechat-video-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
@@ -229,7 +229,7 @@ services:
   notification-service:
     build:
       context: ./src
-      dockerfile: NotificationService.Api/Dockerfile
+      dockerfile: Notification/Dockerfile
     container_name: wechat-notification-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
@@ -256,7 +256,7 @@ services:
   realtime-service:
     build:
       context: ./src
-      dockerfile: Realtime.Api/Dockerfile
+      dockerfile: Realtime/Dockerfile
     container_name: wechat-realtime-service
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
