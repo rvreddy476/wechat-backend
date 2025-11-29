@@ -6,23 +6,15 @@ namespace Shared.Infrastructure.MongoDB;
 
 public static class MongoDbExtensions
 {
-    public static IServiceCollection AddMongoDb(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string sectionName = "MongoDbSettings")
+    public static IServiceCollection AddMongoDb(this IServiceCollection services, IConfiguration configuration, string databaseName)
     {
-        var settings = configuration.GetSection(sectionName).Get<MongoDbSettings>()
-            ?? throw new InvalidOperationException($"MongoDB settings not found in configuration section '{sectionName}'");
-
-        services.AddSingleton<IMongoClient>(sp =>
-        {
-            return new MongoClient(settings.ConnectionString);
-        });
-
-        services.AddSingleton<IMongoDatabase>(sp =>
+        var connectionString = configuration.GetConnectionString("MongoDB") ?? "mongodb://localhost:27017";
+        
+        services.AddSingleton<IMongoClient>(sp => new MongoClient(connectionString));
+        services.AddScoped(sp =>
         {
             var client = sp.GetRequiredService<IMongoClient>();
-            return client.GetDatabase(settings.DatabaseName);
+            return client.GetDatabase(databaseName);
         });
 
         return services;

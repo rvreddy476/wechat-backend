@@ -1,34 +1,107 @@
-﻿################################################################################
-# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
-################################################################################
+## .NET
+*.swp
+*.*~
+project.lock.json
+.DS_Store
+*.pyc
+nupkg/
 
-/.vs
-/src/Gateway.Api/obj
-/src/MediaService.Api/obj
-/src/NotificationService.Api/obj
-/src/PostFeedService.Api/obj
-/src/Realtime.Api/obj
-/src/Shared/Shared.Contracts/bin/Debug/net8.0
-/src/Shared/Shared.Contracts/obj/Debug/net8.0
-/src/Shared/Shared.Domain/bin/Debug/net8.0
-/src/Shared/Shared.Domain/obj/Debug/net8.0
-/src/Shared/Shared.Infrastructure/bin/Debug/net8.0
-/src/Shared/Shared.Infrastructure/obj/Debug/net8.0
-/src/UserProfileService.Api/obj
-/src/VideoProcessing.Worker/obj/Debug/net8.0
-/src/VideoService.Api/obj
-/src/AuthService.Api/obj
-/src/ChatService.Api/obj
-/src/AuthService.Api/bin/Debug/net8.0
-/src/NotificationService.Api/bin/Debug/net8.0
-/src/PostFeedService.Api/bin/Debug/net8.0
-/src/Realtime.Api/bin/Debug/net8.0
-/src/UserProfileService.Api/bin/Debug/net8.0
-/src/VideoProcessing.Worker/bin/Debug/net8.0
-/src/VideoProcessing.Worker/obj
-/src/VideoService.Api/bin/Debug/net8.0
-/src/ChatService.Api/bin/Debug/net8.0
-/src/Gateway.Api/bin/Debug/net8.0
-/src/MediaService.Api/bin/Debug/net8.0
-/src/VideoProcessing.Worker/logs/video-processing-20251126.txt
-/src/VideoProcessing.Worker/logs/video-processing-20251127.txt
+# Visual Studio Code
+.vscode/
+
+# Rider
+.idea/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# .NET Core
+project.fragment.lock.json
+artifacts/
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# Files built by Visual Studio
+*_i.c
+*_p.c
+*_h.h
+*.ilk
+*.meta
+*.obj
+*.iobj
+*.pch
+*.pdb
+*.ipdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*_wpftmp.csproj
+*.log
+*.tlog
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+
+# NuGet Packages
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+*.nuget.props
+*.nuget.targets
+
+# Docker
+.dockerignore
+
+# Environment
+.env
+.env.local
+.env.production
+appsettings.Development.json
+appsettings.Local.json
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database for Auth Service
+  # PostgreSQL for Auth Service
   postgres:
     image: postgres:15-alpine
     container_name: wechat-postgres
@@ -13,7 +13,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./Database/AuthService:/docker-entrypoint-initdb.d
+      - ./src/Auth/Auth.Infrastructure/Persistence/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     networks:
       - wechat-network
     healthcheck:
@@ -22,7 +22,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # MongoDB for Chat, UserProfile, PostFeed Services
+  # MongoDB for Other Services
   mongodb:
     image: mongo:7.0
     container_name: wechat-mongodb
@@ -41,7 +41,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis for Caching
+  # Redis
   redis:
     image: redis:7-alpine
     container_name: wechat-redis
@@ -57,7 +57,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Auth Service (Clean Architecture with CQRS)
+  # Auth Service
   auth-service:
     build:
       context: ./src
@@ -67,20 +67,10 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__PostgreSQL=Host=postgres;Port=5432;Database=wechat_auth;Username=postgres;Password=postgres
-      - ConnectionStrings__AuthDb=Host=postgres;Port=5432;Database=wechat_auth;Username=postgres;Password=postgres
-      - RedisSettings__ConnectionString=redis:6379
-      - RedisSettings__InstanceName=WeChat:Auth:
-      - JwtSettings__Secret=your-super-secret-jwt-key-change-this-in-production-minimum-32-characters
-      - JwtSettings__Issuer=WeChat.AuthService
-      - JwtSettings__Audience=WeChat.API
-      - JwtSettings__AccessTokenExpirationMinutes=15
-      - JwtSettings__RefreshTokenExpirationDays=7
     ports:
       - "5001:80"
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     networks:
       - wechat-network
@@ -95,19 +85,11 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
-      - MongoDbSettings__ConnectionString=mongodb://admin:admin123@mongodb:27017
-      - MongoDbSettings__DatabaseName=wechat_chat
-      - RedisSettings__ConnectionString=redis:6379
-      - RedisSettings__InstanceName=WeChat:Chat:
-      - JwtSettings__Secret=your-super-secret-jwt-key-change-this-in-production-minimum-32-characters
-      - JwtSettings__Issuer=WeChat.AuthService
-      - JwtSettings__Audience=WeChat.API
+      - ConnectionStrings__MongoDB=mongodb://admin:admin123@mongodb:27017
     ports:
       - "5004:80"
     depends_on:
       mongodb:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     networks:
       - wechat-network
@@ -122,19 +104,11 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
-      - MongoDbSettings__ConnectionString=mongodb://admin:admin123@mongodb:27017
-      - MongoDbSettings__DatabaseName=wechat_userprofile
-      - RedisSettings__ConnectionString=redis:6379
-      - RedisSettings__InstanceName=WeChat:UserProfile:
-      - JwtSettings__Secret=your-super-secret-jwt-key-change-this-in-production-minimum-32-characters
-      - JwtSettings__Issuer=WeChat.AuthService
-      - JwtSettings__Audience=WeChat.API
+      - ConnectionStrings__MongoDB=mongodb://admin:admin123@mongodb:27017
     ports:
       - "5002:80"
     depends_on:
       mongodb:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     networks:
       - wechat-network
@@ -149,19 +123,11 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
-      - MongoDbSettings__ConnectionString=mongodb://admin:admin123@mongodb:27017
-      - MongoDbSettings__DatabaseName=wechat_postfeed
-      - RedisSettings__ConnectionString=redis:6379
-      - RedisSettings__InstanceName=WeChat:PostFeed:
-      - JwtSettings__Secret=your-super-secret-jwt-key-change-this-in-production-minimum-32-characters
-      - JwtSettings__Issuer=WeChat.AuthService
-      - JwtSettings__Audience=WeChat.API
+      - ConnectionStrings__MongoDB=mongodb://admin:admin123@mongodb:27017
     ports:
       - "5003:80"
     depends_on:
       mongodb:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     networks:
       - wechat-network
@@ -176,54 +142,15 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
-      - MongoDbSettings__ConnectionString=mongodb://admin:admin123@mongodb:27017
-      - MongoDbSettings__DatabaseName=wechat_media
-      - RedisSettings__ConnectionString=redis:6379
-      - RedisSettings__InstanceName=WeChat:Media:
-      - JwtSettings__Secret=your-super-secret-jwt-key-change-this-in-production-minimum-32-characters
-      - JwtSettings__Issuer=WeChat.AuthService
-      - JwtSettings__Audience=WeChat.API
+      - ConnectionStrings__MongoDB=mongodb://admin:admin123@mongodb:27017
     ports:
       - "5005:80"
     depends_on:
       mongodb:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     networks:
       - wechat-network
     restart: unless-stopped
-    volumes:
-      - media_storage:/app/uploads
-
-  # Video Service
-  video-service:
-    build:
-      context: ./src
-      dockerfile: Video/Dockerfile
-    container_name: wechat-video-service
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:80
-      - MongoDbSettings__ConnectionString=mongodb://admin:admin123@mongodb:27017
-      - MongoDbSettings__DatabaseName=wechat_video
-      - RedisSettings__ConnectionString=redis:6379
-      - RedisSettings__InstanceName=WeChat:Video:
-      - JwtSettings__Secret=your-super-secret-jwt-key-change-this-in-production-minimum-32-characters
-      - JwtSettings__Issuer=WeChat.AuthService
-      - JwtSettings__Audience=WeChat.API
-    ports:
-      - "5006:80"
-    depends_on:
-      mongodb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - wechat-network
-    restart: unless-stopped
-    volumes:
-      - video_storage:/app/videos
 
   # Notification Service
   notification-service:
@@ -234,78 +161,12 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
-      - MongoDbSettings__ConnectionString=mongodb://admin:admin123@mongodb:27017
-      - MongoDbSettings__DatabaseName=wechat_notification
-      - RedisSettings__ConnectionString=redis:6379
-      - RedisSettings__InstanceName=WeChat:Notification:
-      - JwtSettings__Secret=your-super-secret-jwt-key-change-this-in-production-minimum-32-characters
-      - JwtSettings__Issuer=WeChat.AuthService
-      - JwtSettings__Audience=WeChat.API
+      - ConnectionStrings__MongoDB=mongodb://admin:admin123@mongodb:27017
     ports:
       - "5007:80"
     depends_on:
       mongodb:
         condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - wechat-network
-    restart: unless-stopped
-
-  # Realtime Service (SignalR)
-  realtime-service:
-    build:
-      context: ./src
-      dockerfile: Realtime/Dockerfile
-    container_name: wechat-realtime-service
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:80
-      - RedisSettings__ConnectionString=redis:6379
-      - RedisSettings__InstanceName=WeChat:Realtime:
-      - JwtSettings__Secret=your-super-secret-jwt-key-change-this-in-production-minimum-32-characters
-      - JwtSettings__Issuer=WeChat.AuthService
-      - JwtSettings__Audience=WeChat.API
-    ports:
-      - "5008:80"
-    depends_on:
-      redis:
-        condition: service_healthy
-    networks:
-      - wechat-network
-    restart: unless-stopped
-
-  # API Gateway
-  gateway:
-    build:
-      context: ./src
-      dockerfile: Gateway.Api/Dockerfile
-    container_name: wechat-gateway
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:80
-      - Services__AuthService=http://auth-service
-      - Services__UserProfileService=http://userprofile-service
-      - Services__PostFeedService=http://postfeed-service
-      - Services__ChatService=http://chat-service
-      - Services__MediaService=http://media-service
-      - Services__VideoService=http://video-service
-      - Services__NotificationService=http://notification-service
-      - Services__RealtimeService=http://realtime-service
-      - JwtSettings__Secret=your-super-secret-jwt-key-change-this-in-production-minimum-32-characters
-      - JwtSettings__Issuer=WeChat.AuthService
-      - JwtSettings__Audience=WeChat.API
-    ports:
-      - "5000:80"
-    depends_on:
-      - auth-service
-      - userprofile-service
-      - postfeed-service
-      - chat-service
-      - media-service
-      - video-service
-      - notification-service
-      - realtime-service
     networks:
       - wechat-network
     restart: unless-stopped
@@ -318,5 +179,3 @@ volumes:
   postgres_data:
   mongodb_data:
   redis_data:
-  media_storage:
-  video_storage:

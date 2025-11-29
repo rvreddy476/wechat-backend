@@ -1,22 +1,32 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
+using System.Data;
 
 namespace Shared.Infrastructure.PostgreSQL;
 
-/// <summary>
-/// Extension methods for PostgreSQL configuration
-/// </summary>
+public interface IDbConnectionFactory
+{
+    IDbConnection CreateConnection();
+}
+
+public class PostgreSqlConnectionFactory : IDbConnectionFactory
+{
+    private readonly string _connectionString;
+
+    public PostgreSqlConnectionFactory(string connectionString) => _connectionString = connectionString;
+
+    public IDbConnection CreateConnection() => new NpgsqlConnection(_connectionString);
+}
+
 public static class PostgreSqlExtensions
 {
-    /// <summary>
-    /// Adds PostgreSQL connection factory to the DI container
-    /// </summary>
-    public static IServiceCollection AddPostgreSqlConnectionFactory(
-        this IServiceCollection services,
-        string connectionString)
+    public static IServiceCollection AddPostgreSql(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddSingleton<IPostgreSqlConnectionFactory>(
-            _ => new PostgreSqlConnectionFactory(connectionString));
-
+        var connectionString = configuration.GetConnectionString("PostgreSQL") 
+            ?? throw new InvalidOperationException("PostgreSQL connection string not found");
+        
+        services.AddSingleton<IDbConnectionFactory>(new PostgreSqlConnectionFactory(connectionString));
         return services;
     }
 }

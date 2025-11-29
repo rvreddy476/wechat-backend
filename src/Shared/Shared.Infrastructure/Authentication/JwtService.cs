@@ -8,71 +8,45 @@ namespace Shared.Infrastructure.Authentication;
 
 public interface IJwtService
 {
-    string GenerateAccessToken(string userId, string username, string email);
+    string GenerateAccessToken(Guid userId, string username, string email, List<string> roles);
     string GenerateRefreshToken();
     ClaimsPrincipal? ValidateToken(string token);
-    string? GetUserIdFromToken(string token);
 }
 
 public class JwtService : IJwtService
 {
-    private readonly JwtSettings _jwtSettings;
-    private readonly TokenValidationParameters _tokenValidationParameters;
+    private readonly JwtSettings _settings;
 
-    public JwtService(JwtSettings jwtSettings)
+    public JwtService(JwtSettings settings) => _settings = settings;
+
+    public string GenerateAccessToken(Guid userId, string username, string email, List<string> roles)
     {
-        _jwtSettings = jwtSettings;
-
-        _tokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = _jwtSettings.Issuer,
-            ValidAudience = _jwtSettings.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret)),
-            ClockSkew = TimeSpan.Zero
-        };
-    }
-
-    public string GenerateAccessToken(string userId, string username, string email)
-    {
-       var roles = new List<string>();
-        roles.Add("Admin");
-        roles.Add("Creator");
-
         var claims = new List<Claim>
         {
-            new(JwtRegisteredClaimNames.Sub, userId),
+            new(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new(JwtRegisteredClaimNames.Email, email),
-            new(JwtRegisteredClaimNames.UniqueName, username),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new("userId", userId),
+            new("userId", userId.ToString()),
             new("username", username)
         };
-
-        // Add roles as claims
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var expires = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes);
+        var expires = DateTime.UtcNow.AddMinutes(_settings.AccessTokenExpirationMinutes);
 
         var token = new JwtSecurityToken(
-            issuer: _jwtSettings.Issuer,
-            audience: _jwtSettings.Audience,
+            issuer: _settings.Issuer,
+            audience: _settings.Audience,
             claims: claims,
             expires: expires,
-            signingCredentials: creds
-        );
+            signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
     public string GenerateRefreshToken()
     {
-        var randomNumber = new byte[64];
+        var randomNumber = new byte[32];
         using var rng = RandomNumberGenerator.Create();
         rng.GetBytes(randomNumber);
         return Convert.ToBase64String(randomNumber);
@@ -83,13 +57,19 @@ public class JwtService : IJwtService
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var principal = tokenHandler.ValidateToken(token, _tokenValidationParameters, out var validatedToken);
-
-            if (validatedToken is not JwtSecurityToken jwtToken ||
-                !jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+            var key = Encoding.UTF8.GetBytes(_settings.Secret);
+            
+            var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
             {
-                return null;
-            }
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = true,
+                ValidIssuer = _settings.Issuer,
+                ValidateAudience = true,
+                ValidAudience = _settings.Audience,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            }, out _);
 
             return principal;
         }
@@ -97,12 +77,5 @@ public class JwtService : IJwtService
         {
             return null;
         }
-    }
-
-    public string? GetUserIdFromToken(string token)
-    {
-        var principal = ValidateToken(token);
-        return principal?.FindFirst("userId")?.Value ??
-               principal?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
     }
 }
