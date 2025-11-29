@@ -121,3 +121,12 @@ public class UserRepository : IUserRepository
         return count > 0;
     }
 }
+
+    public async Task<Result<User>> GetByRefreshTokenAsync(string refreshToken)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        var user = await connection.QueryFirstOrDefaultAsync<User>(
+            "SELECT * FROM users WHERE refresh_token = @RefreshToken", new { RefreshToken = refreshToken });
+
+        return user != null ? Result.Success(user) : Result.Failure<User>("User not found");
+    }
